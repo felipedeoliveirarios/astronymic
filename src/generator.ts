@@ -1,5 +1,5 @@
 /** Prototype: macrogeometry only. Each edge is a slot for one future glyph. */
-export const ALGORITHM_VERSION = 'segments-v2';
+export const ALGORITHM_VERSION = 'segments-v3';
 export const MAX_LETTERS = 120;
 export type Point = { x: number; y: number };
 export type Segment = {
@@ -97,7 +97,7 @@ export function generate(text: string, customSeed?: string): Constellation {
         const sectorWidth = width / slots.length;
         // Counter the parent's actual deviation from its sector center. Randomness
         // keeps this from becoming a rigid zigzag; clamping preserves the reservation.
-        const shift = Math.max(-sectorWidth * 0.45, Math.min(sectorWidth * 0.45, -offset + (random() - 0.5) * 0.3 * sectorWidth));
+        const shift = Math.max(-sectorWidth * 0.45, Math.min(sectorWidth * 0.45, -offset + (random() - 0.5) * 0.4 * sectorWidth));
         const angle = sectorLow + sectorWidth / 2 + shift;
         const length = Math.max(30, 100 + 0.5 * (100 - (parent?.length ?? 100)) + (random() - 0.5) * 60);
         return { slot, sectorLow, sectorWidth, shift, angle, length };

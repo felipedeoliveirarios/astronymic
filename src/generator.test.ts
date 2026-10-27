@@ -46,7 +46,7 @@ test('representative short and long words obtain layouts without crossings', () 
 
 test('Astronymic central continuation bends back and forth instead of flattening', () => {
   const result = generate('Astronymic');
-  assert.equal(result.version, 'segments-v2');
+  assert.equal(result.version, 'segments-v3');
   const chain = 'STRON'.split('').map(letter => result.segments.find(s => s.letter === letter)!);
   const turns = chain.slice(1).map((segment, index) => {
     assert.equal(segment.parentId, chain[index].id);
