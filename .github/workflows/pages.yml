@@ -24,6 +24,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - run: npm run format:check
       - run: npm test
       # A relative base supports both /astronymic/ and a custom Pages domain.
       - run: npm run build -- --base=./
