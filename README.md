@@ -174,3 +174,50 @@ Impedir inversão de ordem, sobreposição com vértices, troca de lado global o
 ## 7. Próxima etapa sugerida
 
 Implementar um protótipo que gere primeiro a **árvore de segmentos de entrada/saída**, sem glifos internos; depois acrescentar a injeção e a validação. Testar com palavras curtas e longas e seeds fixas antes de trabalhar no acabamento visual do pôster.
+
+## 8. Protótipo executável
+
+A primeira etapa está implementada com **TypeScript, Vite e SVG**, sem backend. Angular permanece uma opção para evolução; este protótipo isola o gerador da interface.
+
+### Desenvolvimento
+
+Requer Node.js 24 e npm. Na raiz do repositório:
+
+```sh
+npm ci
+npm run dev
+```
+
+Verificações e build de publicação:
+
+```sh
+npm test
+npm run build -- --base=./
+npm run preview
+```
+
+O build é gerado em `dist/`. Não há chaves, banco de dados ou variáveis de ambiente obrigatórias. Em ambientes com diretório pessoal sem escrita, use `npm ci --cache /tmp/astronymic-npm-cache`.
+
+### O que esta versão faz
+
+- Gera somente a **árvore de segmentos entrada–saída**, com uma letra por segmento e ordem DFS angular horária.
+- Oferece texto editável, debounce de 500 ms, seed automática/personalizada, nova seed aleatória e indicação opcional de ordem/letras.
+- Usa FNV-1a (unidades UTF-16) e Mulberry32, versionados como `segments-v1`. A seed aleatória vem de Web Crypto e é mostrada para reprodução; a geração usa exclusivamente o PRNG determinístico.
+- Normalização inicial: NFD, remoção de marcas Unicode, conversão para maiúsculas e retenção de A–Z. Espaços, números e pontuação são descartados. Limite: 120 letras após normalização; textos maiores recebem erro sem truncamento silencioso.
+- Reserva uma continuação obrigatória, testa ramos adicionais com probabilidade decrescente e distribui o orçamento restante entre ramos não vazios. Setores globais iniciam em 240° para baixo. A atribuição das letras ocorre na travessia final após ordenar os filhos pela direção de retorno.
+- Valida interseções entre segmentos sem fronteira compartilhada e tenta até 32 candidatos determinísticos. Se persistirem cruzamentos, mostra um aviso e o candidato com menos cruzamentos. Ainda não garante separação espacial de subárvores, distância mínima, ausência de sobreposição em junções ou de colisões entre rótulos.
+
+Os glifos internos e suas marcações, o dicionário completo, a validação microgeométrica e a exportação SVG/PNG **ainda não estão implementados**. Os testes atuais verificam normalização, reprodução, invariantes da árvore, leitura e exemplos sem cruzamentos.
+
+### Publicação no GitHub Pages
+
+O workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) executa testes/build em pull requests e publica os pushes para `main` (ou execução manual em `main`). Usa o `GITHUB_TOKEN` automático; não precisa criar PAT nem armazenar segredo.
+
+1. Envie os arquivos do protótipo e workflow ao GitHub, na branch `main`.
+2. Em **Settings → Pages → Build and deployment → Source**, escolha **GitHub Actions**. Se Pages não estiver disponível, verifique o plano e a visibilidade do repositório.
+3. Acompanhe o workflow **Deploy to GitHub Pages** em **Actions**. Depois de habilitar Pages, se o push já tiver ocorrido, use **Run workflow** na branch `main`.
+4. Use a URL apresentada pelo job `deploy` após a publicação bem-sucedida. Sem domínio personalizado, o endereço esperado é `https://felipedeoliveirarios.github.io/astronymic/`.
+
+GitHub Free oferece Pages para repositórios públicos. Repositórios privados precisam de um plano compatível, como GitHub Pro ou Team. A privacidade do repositório não torna o site privado; no uso comum o site publicado é público. Organizações podem ter restrições adicionais de Actions e Pages.
+
+O build usa base relativa (`./`) para carregar os assets tanto em `/astronymic/` quanto em um domínio próprio. O app não usa rotas de histórico, portanto não exige fallback SPA no Pages.
