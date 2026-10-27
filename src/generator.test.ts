@@ -43,3 +43,18 @@ test('representative short and long words obtain layouts without crossings', () 
     assert.equal(generate(text).crossings, 0, text);
   }
 });
+
+test('Astronymic central continuation bends back and forth instead of flattening', () => {
+  const result = generate('Astronymic');
+  assert.equal(result.version, 'segments-v2');
+  const chain = 'STRON'.split('').map(letter => result.segments.find(s => s.letter === letter)!);
+  const turns = chain.slice(1).map((segment, index) => {
+    assert.equal(segment.parentId, chain[index].id);
+    return segment.angle - chain[index].angle;
+  });
+  for (let i = 0; i < turns.length; i++) {
+    assert.ok(Math.abs(turns[i]) > Math.PI / 18, 'central turns should exceed ten degrees');
+    if (i > 0) assert.ok(turns[i] * turns[i - 1] < 0, 'successive central turns should reverse direction');
+  }
+  assert.equal(result.crossings, 0);
+});

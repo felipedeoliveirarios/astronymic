@@ -1,5 +1,5 @@
 /** Prototype: macrogeometry only. Each edge is a slot for one future glyph. */
-export const ALGORITHM_VERSION = 'segments-v1';
+export const ALGORITHM_VERSION = 'segments-v2';
 export const MAX_LETTERS = 120;
 export type Point = { x: number; y: number };
 export type Segment = {
@@ -87,14 +87,17 @@ export function generate(text: string, customSeed?: string): Constellation {
   const seed = customSeed?.trim() || defaultSeed(normalized);
   let best: Constellation | undefined;
   for (let attempt = 0; attempt < 32; attempt++) {
-    const random = randomSource(`${ALGORITHM_VERSION}:${seed}:${attempt}`);
+    // Keep the v1 random stream so this revision changes angles, not topology or lengths.
+    const random = randomSource(`segments-v1:${seed}:${attempt}`);
     const roots = topology(normalized.length, 0.5, random);
     const segments: Segment[] = [];
     function layout(slots: Slot[], start: Point, low: number, width: number, parent: Segment | null, offset: number): Segment[] {
       const candidates = slots.map((slot, index) => {
         const sectorLow = low + width * index / slots.length;
         const sectorWidth = width / slots.length;
-        const shift = Math.max(-sectorWidth * 0.45, Math.min(sectorWidth * 0.45, offset + (random() - 0.5) * 0.3 * sectorWidth));
+        // Counter the parent's actual deviation from its sector center. Randomness
+        // keeps this from becoming a rigid zigzag; clamping preserves the reservation.
+        const shift = Math.max(-sectorWidth * 0.45, Math.min(sectorWidth * 0.45, -offset + (random() - 0.5) * 0.3 * sectorWidth));
         const angle = sectorLow + sectorWidth / 2 + shift;
         const length = Math.max(30, 100 + 0.5 * (100 - (parent?.length ?? 100)) + (random() - 0.5) * 60);
         return { slot, sectorLow, sectorWidth, shift, angle, length };

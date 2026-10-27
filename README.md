@@ -86,7 +86,7 @@ Iniciar com a regra acima **sem jitter extra** na probabilidade herdada. Avaliar
 - Com um filho, ele herda integralmente o setor reservado.
 - Com `n` filhos, dividir o setor reservado em `n` partes iguais, respeitando a ordem de leitura.
 - Posicionar a próxima saída próximo ao centro do setor correspondente, com deslocamento angular pseudoaleatório de até **±15% da abertura**.
-- **Propagar o offset angular** para a orientação preferencial dos descendentes, mas **limitá-lo ao setor reservado**: a variação não amplia a reserva nem autoriza invadir o espaço atribuído a irmãos.
+- **Compensar o offset angular anterior**: sortear o novo desvio como `offset_seguinte = -offset_anterior + ruído`, com ruído de até ±15% da abertura do setor atual. O offset anterior é o desvio efetivamente aplicado em relação ao centro do setor do pai. Limitar o resultado a ±45% da abertura do setor atual, sem ampliar a reserva nem invadir o espaço atribuído a irmãos. Isso favorece um percurso serpenteante, sem impor uma alternância rígida; cada ramo filho evolui independentemente.
 - Os setores são expressos em uma referência angular global; a direção preferencial pode evoluir de geração em geração.
 
 **Importante:** setores locais não garantem ausência de cruzamentos, porque os vértices de origem dos setores podem ser diferentes. A geometria resultante precisa de validação de colisões/interseções. Definir formalmente a reserva espacial de toda a subárvore (não apenas de uma aresta) é parte do trabalho de implementação.
@@ -202,7 +202,7 @@ O build é gerado em `dist/`. Não há chaves, banco de dados ou variáveis de a
 
 - Gera somente a **árvore de segmentos entrada–saída**, com uma letra por segmento e ordem DFS angular horária.
 - Oferece texto editável, debounce de 500 ms, seed automática/personalizada, nova seed aleatória e indicação opcional de ordem/letras.
-- Usa FNV-1a (unidades UTF-16) e Mulberry32, versionados como `segments-v1`. A seed aleatória vem de Web Crypto e é mostrada para reprodução; a geração usa exclusivamente o PRNG determinístico.
+- Usa FNV-1a (unidades UTF-16) e Mulberry32, com versão de geração `segments-v2` (compensação angular). O namespace de aleatoriedade `segments-v1` foi mantido para isolar a mudança de geometria, preservando os sorteios de topologia e comprimentos por tentativa. A seed aleatória vem de Web Crypto e é mostrada para reprodução; a geração usa exclusivamente o PRNG determinístico.
 - Normalização inicial: NFD, remoção de marcas Unicode, conversão para maiúsculas e retenção de A–Z. Espaços, números e pontuação são descartados. Limite: 120 letras após normalização; textos maiores recebem erro sem truncamento silencioso.
 - Reserva uma continuação obrigatória, testa ramos adicionais com probabilidade decrescente e distribui o orçamento restante entre ramos não vazios. Setores globais iniciam em 240° para baixo. A atribuição das letras ocorre na travessia final após ordenar os filhos pela direção de retorno.
 - Valida interseções entre segmentos sem fronteira compartilhada e tenta até 32 candidatos determinísticos. Se persistirem cruzamentos, mostra um aviso e o candidato com menos cruzamentos. Ainda não garante separação espacial de subárvores, distância mínima, ausência de sobreposição em junções ou de colisões entre rótulos.
