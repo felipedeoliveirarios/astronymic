@@ -82,7 +82,7 @@ export function appendGlyphs(parent: SVGElement, glyphs: Glyph[], includeBoundar
   const drawn = new Set<string>();
   for (const glyph of glyphs) {
     const group = svg('g', { class: 'glyph', 'data-letter': glyph.letter, 'data-segment-id': glyph.segmentId });
-    const title = svg('title'); title.textContent = `${glyph.letter} · ${glyph.notation}`; group.append(title);
+    const title = svg('title'); title.textContent = `Glifo ${glyph.letter}`; group.append(title);
     for (const edge of glyph.edges) {
       const edgeGroup = svg('g', { class: 'glyph-edge', 'data-edge-id': edge.id, 'data-style': edge.style, mask: `url(#${maskId})` });
       appendEdge(edgeGroup, edge, includeBoundaries); group.append(edgeGroup);
