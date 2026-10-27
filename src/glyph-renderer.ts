@@ -1,3 +1,4 @@
+import { DEFAULT_TRANSLATOR, type Translator } from './i18n.ts';
 import type { Glyph, GlyphEdge } from './glyphs.ts';
 import { distance, pointOnEdge } from './geometry.ts';
 import type { Point } from './generator.ts';
@@ -138,6 +139,7 @@ export function appendGlyphs(
   parent: SVGElement,
   glyphs: Glyph[],
   includeBoundaries = false,
+  text: Translator = DEFAULT_TRANSLATOR,
 ) {
   if (!glyphs.length) return;
   const maskId = starGapMask(parent, glyphs, includeBoundaries);
@@ -149,7 +151,7 @@ export function appendGlyphs(
       'data-segment-id': glyph.segmentId,
     });
     const title = svg('title');
-    title.textContent = `Glifo ${glyph.letter}`;
+    title.textContent = text.text('glyphName', { letter: glyph.letter });
     group.append(title);
     for (const edge of glyph.edges) {
       const edgeGroup = svg('g', {

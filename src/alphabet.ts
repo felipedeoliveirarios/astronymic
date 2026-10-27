@@ -1,8 +1,9 @@
+import type { Translator } from './i18n.ts';
 import { ALPHABET, injectGlyph } from './glyphs.ts';
 import { appendGlyphs } from './glyph-renderer.ts';
 import { svgElement as element } from './svg.ts';
 
-export function renderAlphabet(reference: HTMLElement): void {
+export function renderAlphabet(reference: HTMLElement, text: Translator): void {
   const rows = document.createDocumentFragment();
   // Canonical, undeformed reference previews share the exact production definitions/renderer.
   for (const [index, letter] of Object.keys(ALPHABET).entries()) {
@@ -14,7 +15,7 @@ export function renderAlphabet(reference: HTMLElement): void {
     const preview = element('svg', {
       viewBox: '-10 -38 120 76',
       role: 'img',
-      'aria-label': `Glifo ${letter}; entrada à esquerda, saída à direita`,
+      'aria-label': text.text('referenceGlyph', { letter }),
     });
     const glyph = injectGlyph(
       {
@@ -29,10 +30,25 @@ export function renderAlphabet(reference: HTMLElement): void {
       0,
       true,
     );
-    appendGlyphs(preview, [glyph], true);
+    appendGlyphs(preview, [glyph], true, text);
     row.append(label, preview);
     rows.append(row);
   }
 
   reference.replaceChildren(rows);
+}
+
+export function translateAlphabet(
+  reference: HTMLElement,
+  text: Translator,
+): void {
+  for (const row of reference.querySelectorAll('.reference-row')) {
+    const letter = row.querySelector('.reference-letter')!.textContent!;
+    row
+      .querySelector('svg')!
+      .setAttribute('aria-label', text.text('referenceGlyph', { letter }));
+    row.querySelector('.glyph > title')!.textContent = text.text('glyphName', {
+      letter,
+    });
+  }
 }

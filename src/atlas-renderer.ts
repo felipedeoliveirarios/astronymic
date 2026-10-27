@@ -1,3 +1,4 @@
+import { DEFAULT_TRANSLATOR, type Translator } from './i18n.ts';
 import type { Constellation, Branching } from './generator.ts';
 import type { Injection } from './glyphs.ts';
 import type { GlyphLabel } from './labels.ts';
@@ -11,15 +12,14 @@ import {
 } from './appearance.ts';
 import { svgElement as element } from './svg.ts';
 
-function percent(value: number) {
-  return `${Number((value * 100).toFixed(2))}%`;
-}
-function branchingLabel(branching: Branching): string {
-  if (branching.stop === 'leaf') return 'fim';
+function branchingLabel(branching: Branching, text: Translator): string {
+  if (branching.stop === 'leaf') return text.text('branchEnd');
   if (!branching.trials.length)
-    return `${percent(branching.probability)} · sem teste`;
+    return text.text('branchNoTest', {
+      probability: text.percent(branching.probability),
+    });
   return branching.trials
-    .map((t) => `${percent(t.probability)}${t.success ? '✓' : '×'}`)
+    .map((t) => `${text.percent(t.probability)}${t.success ? '✓' : '×'}`)
     .join(' → ');
 }
 export function renderAtlas(
@@ -27,6 +27,7 @@ export function renderAtlas(
   injection: Injection,
   placements: GlyphLabel[],
   showDebug: boolean,
+  text: Translator = DEFAULT_TRANSLATOR,
 ): SVGSVGElement {
   const points = [
     { x: 0, y: 0 },
@@ -49,9 +50,17 @@ export function renderAtlas(
     'aria-labelledby': 'svg-title svg-desc',
   });
   const svgTitle = element('title', { id: 'svg-title' });
-  svgTitle.textContent = `Constelação de glifos para ${result.normalized || 'texto vazio'}`;
+  svgTitle.textContent = text.text('svgTitle', {
+    text: result.normalized || text.text('emptyText'),
+  });
   const desc = element('desc', { id: 'svg-desc' });
-  desc.textContent = `${injection.glyphs.length} glifos na ordem ${result.normalized}. ${injection.issues.length} conflitos geométricos detectados. Seed ${result.seed}. Versões ${result.version} e ${injection.version}.`;
+  desc.textContent = text.text('svgDescription', {
+    count: text.number(injection.glyphs.length),
+    text: result.normalized,
+    issues: text.number(injection.issues.length),
+    seed: result.seed,
+    versions: `${result.version} / ${injection.version}`,
+  });
   svg.append(svgTitle, desc);
   if (showDebug && result.segments.length) {
     const overlay = element('g', { class: 'debug-overlay' });
@@ -66,7 +75,13 @@ export function renderAtlas(
         style: `--sector-color: hsl(${(s.id * 67 + 170) % 360} 65% 70%)`,
       });
       const tooltip = element('title', {});
-      tooltip.textContent = `Segmento ${s.id + 1} (${s.letter}): setor ${((width * 180) / Math.PI).toFixed(1)}°, início ${((low * 180) / Math.PI).toFixed(1)}°, offset ${((s.debug.offset * 180) / Math.PI).toFixed(1)}°.`;
+      tooltip.textContent = text.text('sectorTooltip', {
+        index: text.number(s.id + 1),
+        letter: s.letter,
+        width: text.decimal((width * 180) / Math.PI),
+        start: text.decimal((low * 180) / Math.PI),
+        offset: text.decimal((s.debug.offset * 180) / Math.PI),
+      });
       wedge.append(tooltip);
       overlay.append(
         wedge,
@@ -82,7 +97,7 @@ export function renderAtlas(
     }
     svg.append(overlay);
   }
-  appendGlyphs(svg, injection.glyphs);
+  appendGlyphs(svg, injection.glyphs, false, text);
   svg.append(
     element('circle', {
       cx: 0,
@@ -104,26 +119,29 @@ export function renderAtlas(
     );
   }
   for (const placement of placements) {
-    const text = element('text', {
+    const label = element('text', {
       x: placement.center.x,
       y: placement.center.y,
       class: 'glyph-label',
       'text-anchor': 'middle',
       'dominant-baseline': 'central',
     });
-    text.textContent = placement.text;
-    svg.append(text);
+    label.textContent = placement.text;
+    svg.append(label);
   }
   if (showDebug && result.segments.length) {
     const nodes = [
       {
         point: { x: 0, y: 0 },
-        name: 'Origem',
+        name: text.text('origin'),
         branching: result.rootBranching,
       },
       ...result.segments.map((s) => ({
         point: s.end,
-        name: `Junção ${s.id + 1} (${s.letter})`,
+        name: text.text('junction', {
+          index: text.number(s.id + 1),
+          letter: s.letter,
+        }),
         branching: s.debug.branching,
       })),
     ];
@@ -133,9 +151,23 @@ export function renderAtlas(
         y: point.y + 17,
         class: 'debug-probability',
       });
-      label.textContent = branchingLabel(branching);
+      label.textContent = branchingLabel(branching, text);
       const tooltip = element('title', {});
-      tooltip.textContent = `${name}: probabilidade inicial ${percent(branching.probability)}. ${branchingLabel(branching)}. ${branching.stop === 'leaf' ? 'Sem letras restantes.' : `Probabilidade herdada pelos descendentes: ${percent(branching.inheritedProbability)}. ${branching.stop === 'budget' ? 'Orçamento de letras esgotado.' : 'Primeiro teste sem sucesso encerrou as ramificações adicionais.'}`}`;
+      const detail =
+        branching.stop === 'leaf'
+          ? text.text('branchEmpty')
+          : text.text('branchInheritance', {
+              probability: text.percent(branching.inheritedProbability),
+              reason: text.text(
+                branching.stop === 'budget' ? 'branchBudget' : 'branchFailure',
+              ),
+            });
+      tooltip.textContent = text.text('branchTooltip', {
+        name,
+        probability: text.percent(branching.probability),
+        tests: branchingLabel(branching, text),
+        detail,
+      });
       label.append(tooltip);
       svg.append(label);
     }

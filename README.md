@@ -230,6 +230,14 @@ Use **Ctrl+P** (ou **Cmd+P**) para imprimir ou salvar em PDF. O estilo de impres
 
 Foram verificados PDFs de uma página com rótulos ligados/desligados, título longo e viewport mobile. O PDF preserva a aparência do desenho e as folgas dos traços. A composição usa SVG; o navegador pode rasterizar as máscaras durante a geração do PDF.
 
+### Idiomas
+
+A interface oferece **português, inglês, espanhol e francês**. Na primeira visita, usa a primeira preferência suportada de `navigator.languages` (ou `navigator.language`), incluindo variantes como `pt-BR`, `en-US`, `es-AR` e `fr-CA`. Se nenhuma for suportada, usa português.
+
+O seletor **Idioma / Language / Idioma / Langue**, em Ajustes, permite escolher manualmente. A escolha fica em `localStorage` (`astronymic.language`) e tem prioridade nas visitas seguintes. Se o armazenamento estiver indisponível, a seleção continua funcionando na sessão.
+
+`src/locales/` contém os catálogos tipados e `src/i18n.ts` resolve o idioma, interpola mensagens e usa `Intl` para números, percentuais e plurais. São traduzidos menus, dicas, avisos, placeholders, metadados da página, descrições acessíveis de SVG e tooltips do debug/alfabeto. A troca preserva título digitado, seed, toggles, geometria e cache; uma referência A–Z já aberta recebe apenas novos textos. O alfabeto de geração e a normalização A–Z permanecem iguais em todos os idiomas. A impressão mantém apenas os elementos do atlas, independentemente do idioma da interface.
+
 ### Organização e desempenho
 
 - `src/main.ts` coordena os eventos e o estado da interface. `src/ui.ts` monta a estrutura da página; `src/atlas-renderer.ts` produz o SVG do atlas; `src/svg.ts` reúne a criação dos elementos SVG.

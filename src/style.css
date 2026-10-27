@@ -580,3 +580,19 @@ button {
   margin-top: 0;
   padding-top: 0;
 }
+
+.language-select {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 22px;
+  border: 1px solid #2b3548;
+  border-radius: 4px;
+  background: #0b1221;
+  color: #ebedf2;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.controls > label:not(.check) {
+  text-transform: uppercase;
+}

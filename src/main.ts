@@ -2,12 +2,16 @@ import '@fontsource/playfair-display/800.css';
 import '@fontsource/jetbrains-mono/latin-400.css';
 import './style.css';
 import { normalizeText, MAX_LETTERS } from './generator.ts';
-import { createSceneCache } from './scene.ts';
+import { createSceneCache, type Scene } from './scene.ts';
 import { renderAtlas } from './atlas-renderer.ts';
-import { renderAlphabet } from './alphabet.ts';
-import { mountAtlas } from './ui.ts';
+import { renderAlphabet, translateAlphabet } from './alphabet.ts';
+import { mountAtlas, applyLanguage } from './ui.ts';
 
+import { createTranslator, loadLocale, saveLocale, isLocale } from './i18n.ts';
+
+let text = createTranslator(loadLocale());
 const {
+  language,
   title,
   feedback,
   menus,
@@ -22,23 +26,14 @@ const {
   debugHelp,
   alphabet,
   reference,
-} = mountAtlas();
+} = mountAtlas(text);
 const titleText = () => (title.textContent ?? '').replace(/[\r\n]+/g, ' ');
 const cache = createSceneCache();
 const context = document.createElement('canvas').getContext('2d')!;
 let fontRevision = 0;
+let currentScene: Scene | undefined;
 
-function update() {
-  const normalized = normalizeText(titleText());
-  const invalid = normalized.length > MAX_LETTERS;
-  title.setAttribute('aria-invalid', String(invalid));
-  if (invalid) {
-    feedback.hidden = false;
-    feedback.textContent = `O texto contém ${normalized.length} letras. Use até ${MAX_LETTERS}; o atlas mantém o último resultado válido.`;
-    status.textContent = feedback.textContent;
-    return;
-  }
-  const scene = cache.getScene(titleText(), seed.value);
+function displayScene(scene: Scene) {
   const { constellation: result, injection } = scene;
   context.font = `400 8px ${getComputedStyle(drawing).getPropertyValue('--label-font-family')}`;
   const placements = labels.checked
@@ -53,24 +48,51 @@ function update() {
         );
       })
     : [];
-  count.textContent = `${String(result.segments.length).padStart(2, '0')} LETRAS`;
-  seedCaption.textContent = `SEED / ${result.seed}`;
+  count.textContent = `${text.number(result.segments.length).padStart(2, '0')} ${text.plural('letterOne', 'letterMany', result.segments.length).toLocaleUpperCase(text.locale)}`;
+  seedCaption.textContent = text.text('seedCaption', { seed: result.seed });
   version.textContent =
     `${result.version} · ${injection.version}`.toUpperCase();
   debugHelp.hidden = !debug.checked;
   feedback.hidden = injection.issues.length === 0;
   feedback.textContent = injection.issues.length
-    ? `${injection.issues.length} conflitos entre glifos, vértices ou marcas persistem. Experimente outra seed em Ajustes.`
+    ? text.plural('warningOne', 'warningMany', injection.issues.length)
     : '';
   drawing.replaceChildren(
-    renderAtlas(result, injection, placements, debug.checked),
+    renderAtlas(result, injection, placements, debug.checked, text),
   );
   status.textContent = !result.normalized
-    ? 'Digite ao menos uma letra de A a Z para começar.'
+    ? text.text('emptyStatus')
     : injection.issues.length === 0
-      ? `${injection.glyphs.length} glifos em ordem DFS · nenhuma colisão geométrica detectada · seed ${result.seed}`
-      : `${injection.issues.length} conflitos geométricos persistem após ${injection.attempts} tentativas de injeção. Experimente outra seed. Este layout ainda precisa de ajuste.`;
+      ? text.plural('readyOne', 'readyMany', injection.glyphs.length, {
+          seed: result.seed,
+        })
+      : text.plural('conflictsOne', 'conflictsMany', injection.issues.length, {
+          attempts: text.plural(
+            'attemptOne',
+            'attemptMany',
+            injection.attempts,
+          ),
+        });
 }
+
+function update() {
+  const normalized = normalizeText(titleText());
+  const invalid = normalized.length > MAX_LETTERS;
+  title.setAttribute('aria-invalid', String(invalid));
+  if (invalid) {
+    if (currentScene) displayScene(currentScene);
+    feedback.hidden = false;
+    feedback.textContent = text.text('tooLong', {
+      count: text.number(normalized.length),
+      max: text.number(MAX_LETTERS),
+    });
+    status.textContent = feedback.textContent;
+    return;
+  }
+  currentScene = cache.getScene(titleText(), seed.value);
+  displayScene(currentScene);
+}
+
 let timer: ReturnType<typeof setTimeout>;
 window.addEventListener('beforeprint', () => {
   clearTimeout(timer);
@@ -159,7 +181,17 @@ void document.fonts.ready.then(() => {
 let alphabetMounted = false;
 alphabet.addEventListener('toggle', () => {
   if (alphabet.open && !alphabetMounted) {
-    renderAlphabet(reference);
+    renderAlphabet(reference, text);
     alphabetMounted = true;
   }
+});
+
+language.addEventListener('change', () => {
+  if (!isLocale(language.value)) return;
+  text = createTranslator(language.value);
+  saveLocale(text.locale);
+  applyLanguage(text);
+  if (alphabetMounted) translateAlphabet(reference, text);
+  clearTimeout(timer);
+  update();
 });
