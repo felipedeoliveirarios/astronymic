@@ -15,6 +15,10 @@ export default {
   showDebug: 'Debug: sectors and branching',
   debugHelp:
     'Fans show local sectors. Percentages indicate branching trials: ✓ created a branch, × stopped. “No trial” means there are not enough letters for another branch; “end” marks a leaf. Hover over sectors and percentages for details. Fans do not bound the entire subtree.',
+  exportFormat: 'Image format',
+  formatPoster: 'Poster · 4:5',
+  formatLandscape: 'Landscape · 16:9',
+  formatPortrait: 'Portrait · 9:16',
   exportPng: 'Export image (PNG)',
   exporting: 'Exporting image…',
   exportSuccess: 'Image exported.',

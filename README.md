@@ -262,4 +262,4 @@ O build usa base relativa (`./`) para carregar os assets tanto em `/astronymic/`
 
 ### Exportação de imagem
 
-O menu de ajustes permite baixar um PNG de 2400 × 3000 pixels com fundo escuro, título e constelação. A exportação respeita o toggle de letras e números, omite debug e controles e acontece inteiramente no navegador.
+O menu de ajustes permite baixar um PNG nos formatos pôster 4:5 (2400 × 3000), horizontal 16:9 (3200 × 1800) ou vertical 9:16 (1800 × 3200 pixels) com fundo escuro, título e constelação. A exportação respeita o toggle de letras e números, omite debug e controles e acontece inteiramente no navegador.

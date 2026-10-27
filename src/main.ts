@@ -1,4 +1,4 @@
-import { exportPng } from './export.ts';
+import { exportPng, type ExportFormat } from './export.ts';
 import '@fontsource/playfair-display/800.css';
 import '@fontsource/jetbrains-mono/latin-400.css';
 import './style.css';
@@ -209,7 +209,12 @@ exportButton.addEventListener('click', async () => {
   exportStatus.hidden = false;
   exportStatus.textContent = text.text('exporting');
   try {
-    await exportPng(svg, titleText());
+    await exportPng(
+      svg,
+      titleText(),
+      document.querySelector<HTMLSelectElement>('#export-format')!
+        .value as ExportFormat,
+    );
     exportStatus.textContent = text.text('exportSuccess');
   } catch {
     exportStatus.textContent = text.text('exportError');

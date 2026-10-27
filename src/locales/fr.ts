@@ -15,6 +15,10 @@ export default {
   showDebug: 'Debug : secteurs et ramification',
   debugHelp:
     'Les éventails montrent les secteurs locaux. Les pourcentages indiquent les essais de ramification : ✓ branche créée, × arrêt. « Aucun essai » signifie qu’il ne reste pas assez de lettres pour une autre branche ; « fin » indique une feuille. Survolez les secteurs et les pourcentages pour voir les détails. Les éventails ne délimitent pas tout le sous-arbre.',
+  exportFormat: 'Format de l’image',
+  formatPoster: 'Affiche · 4:5',
+  formatLandscape: 'Paysage · 16:9',
+  formatPortrait: 'Portrait · 9:16',
   exportPng: 'Exporter une image (PNG)',
   exporting: 'Exportation de l’image…',
   exportSuccess: 'Image exportée.',

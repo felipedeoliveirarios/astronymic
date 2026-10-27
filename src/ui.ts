@@ -18,6 +18,8 @@ export function mountAtlas(text: Translator) {
           <p id="seed-help" class="help" data-i18n="seedHelp"></p>
           <button id="random" class="primary" type="button"><span data-i18n="randomSky"></span> <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13L13 3M4 3h9v9" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
           <button id="reset" class="secondary" type="button" data-i18n="resetSeed"></button>
+          <label for="export-format" data-i18n="exportFormat"></label>
+          <select id="export-format" class="language-select"><option value="4:5" data-i18n="formatPoster"></option><option value="16:9" data-i18n="formatLandscape"></option><option value="9:16" data-i18n="formatPortrait"></option></select>
           <button id="export-png" class="secondary" type="button" data-i18n="exportPng"></button>
           <p id="export-status" class="help" role="status" aria-live="polite" hidden></p>
           <div class="rule"></div>
