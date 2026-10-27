@@ -596,3 +596,12 @@ button {
 .controls > label:not(.check) {
   text-transform: uppercase;
 }
+
+.credits a {
+  color: inherit;
+  text-underline-offset: 3px;
+}
+.credits a:hover,
+.credits a:focus-visible {
+  color: #c6ac7f;
+}

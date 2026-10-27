@@ -32,6 +32,7 @@ export function mountAtlas(text: Translator) {
           <h2 class="panel-title" data-i18n="infoHeading"></h2>
           <details class="reading-help"><summary data-i18n="readHeading"></summary><p data-i18n="readHelp"></p></details>
           <details class="reading-help alphabet-help"><summary data-i18n="alphabetHeading"></summary><div id="glyph-reference"></div><p data-i18n="alphabetHelp"></p><p data-i18n="alphabetDirections"></p></details>
+          <p class="credits help"><span data-i18n="credits"></span> <a href="https://www.instagram.com/the_alchemy_book/" target="_blank" rel="noopener noreferrer">@the_alchemy_book</a>.</p>
           <div class="metadata"><span id="count"></span><span id="version"></span><span id="seed-caption"></span></div>
         </div>
       </details>

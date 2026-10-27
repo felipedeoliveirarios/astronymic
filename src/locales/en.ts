@@ -15,6 +15,7 @@ export default {
   showDebug: 'Debug: sectors and branching',
   debugHelp:
     'Fans show local sectors. Percentages indicate branching trials: ✓ created a branch, × stopped. “No trial” means there are not enough letters for another branch; “end” marks a leaf. Hover over sectors and percentages for details. Fans do not bound the entire subtree.',
+  credits: 'Astronymic code created by',
   infoHeading: 'Information',
   readHeading: 'How to read',
   readHelp:

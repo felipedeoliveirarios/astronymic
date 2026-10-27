@@ -15,6 +15,7 @@ export default {
   showDebug: 'Debug: sectores y ramificación',
   debugHelp:
     'Los abanicos muestran los sectores locales. Los porcentajes indican las pruebas de ramificación: ✓ creó una rama, × terminó. «Sin prueba» indica que no hay suficientes letras para otra rama; «fin» indica una hoja. Pasa el cursor por los sectores y porcentajes para ver detalles. Los abanicos no delimitan todo el subárbol.',
+  credits: 'Código Astronymic creado por',
   infoHeading: 'Información',
   readHeading: 'Cómo leer',
   readHelp:
