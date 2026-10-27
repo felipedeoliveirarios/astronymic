@@ -46,7 +46,9 @@ export function appendGlyphs(parent: SVGElement, glyphs: Glyph[], includeBoundar
       appendEdge(edgeGroup, edge); group.append(edgeGroup);
     }
     for (const mark of glyph.marks) group.append(svg('circle', {
-      cx: mark.point.x, cy: mark.point.y, r: mark.radius, class: 'glyph-mark',
+      cx: mark.point.x, cy: mark.point.y, r: mark.radius * 2.6, class: 'halo glyph-mark-halo',
+    }), svg('circle', {
+      cx: mark.point.x, cy: mark.point.y, r: mark.radius, class: 'star glyph-mark',
       'data-side': mark.side === -1 ? 'above' : 'below', 'data-edge-id': mark.edgeId,
     }));
     for (const vertex of glyph.vertices) {
