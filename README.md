@@ -2,7 +2,7 @@
 
 **Astronymic** é um sistema de escrita baseado em grafos e uma aplicação web para transformar palavras em composições visuais semelhantes a constelações. O objetivo principal da aplicação é **gerar** desenhos válidos a partir de texto, não reconhecer ou decodificar desenhos arbitrários.
 
-> Estado: especificação conceitual inicial. Parâmetros numéricos são pontos de partida para testes, não calibrações definitivas.
+> Estado: protótipo funcional de macrogeometria e injeção dos 26 glifos. Parâmetros numéricos são pontos de partida para testes, não calibrações definitivas.
 
 ## 1. Alfabeto
 
@@ -177,7 +177,7 @@ Implementar um protótipo que gere primeiro a **árvore de segmentos de entrada/
 
 ## 8. Protótipo executável
 
-A primeira etapa está implementada com **TypeScript, Vite e SVG**, sem backend. Angular permanece uma opção para evolução; este protótipo isola o gerador da interface.
+A árvore e a injeção dos glifos estão implementadas com **TypeScript, Vite e SVG**, sem backend. Angular permanece uma opção para evolução; este protótipo isola o gerador da interface.
 
 ### Desenvolvimento
 
@@ -200,7 +200,7 @@ O build é gerado em `dist/`. Não há chaves, banco de dados ou variáveis de a
 
 ### O que esta versão faz
 
-- Gera somente a **árvore de segmentos entrada–saída**, com uma letra por segmento e ordem DFS angular horária.
+- Gera a **árvore de segmentos entrada–saída**, com uma letra por segmento e ordem DFS angular horária, e injeta os 26 glifos do alfabeto sem mover as fronteiras. A macrogeometria continua disponível no debug.
 - O atlas ocupa a página inteira, com título editável diretamente no pôster e debounce de 500 ms. O menu compacto **Ajustes**, inicialmente recolhido no canto superior direito, reúne seed automática/personalizada, nova seed aleatória, toggles de ordem/letras e debug, e informações de leitura. Fecha com Escape ou clique fora; Enter encerra a edição do título, e colagem usa somente texto simples. Mensagens visíveis ficam reservadas para erros e cruzamentos; contagem de letras, seed efetiva e versão ficam dentro do menu.
 - O toggle **Debug: setores e branching** sobrepõe leques dos setores locais de cada segmento e os percentuais realmente testados em cada junção (incluindo a origem). `✓` indica ramo criado e `×` a primeira falha; folhas e esgotamento do orçamento aparecem como `fim` e `sem teste`. Tooltips detalham a abertura, o offset e a probabilidade herdada. Os leques têm raio ilustrativo e não representam uma reserva espacial garantida de toda a subárvore. A instrumentação não consome novos sorteios nem altera a geometria/versão do algoritmo.
 - Usa FNV-1a (unidades UTF-16) e Mulberry32, com versão de geração `segments-v3` (compensação angular com ruído de até ±20% da abertura do setor). O namespace de aleatoriedade `segments-v1` foi mantido para isolar a mudança de geometria, preservando os sorteios de topologia e comprimentos por tentativa. A seed aleatória vem de Web Crypto e é mostrada para reprodução; a geração usa exclusivamente o PRNG determinístico.
@@ -208,7 +208,17 @@ O build é gerado em `dist/`. Não há chaves, banco de dados ou variáveis de a
 - Reserva uma continuação obrigatória, testa ramos adicionais com probabilidade decrescente e distribui o orçamento restante entre ramos não vazios. Setores globais iniciam em 240° para baixo. A atribuição das letras ocorre na travessia final após ordenar os filhos pela direção de retorno.
 - Valida interseções entre segmentos sem fronteira compartilhada e tenta até 32 candidatos determinísticos. Se persistirem cruzamentos, mostra um aviso e o candidato com menos cruzamentos. Ainda não garante separação espacial de subárvores, distância mínima, ausência de sobreposição em junções ou de colisões entre rótulos.
 
-Os glifos internos e suas marcações, o dicionário completo, a validação microgeométrica e a exportação SVG/PNG **ainda não estão implementados**. Os testes atuais verificam normalização, reprodução, invariantes da árvore, leitura e exemplos sem cruzamentos.
+### Injeção dos glifos (`glyphs-v1`)
+
+- `src/glyphs.ts` define o alfabeto pela notação compacta, separando grafo, caminhos, atributos de aresta e marcas. `src/glyph-renderer.ts` desenha o modelo em SVG; o atlas e o dicionário **Alfabeto A–Z**, dentro de Ajustes, usam as mesmas definições e renderização. As referências são regulares, sem deformação.
+- Glifos compostos partilham somente entrada/saída entre seus caminhos. O primeiro caminho interno ocupa o lado anti-horário do segmento entrada–saída; o segundo, o horário. Assim, B/C e P/Q mantêm a ordem dos caminhos. H possui dois vértices internos. O afastamento regular dos vértices internos é `max(22% da distância entrada–saída, 11 unidades)`, garantindo espaço para marcas em segmentos curtos.
+- V e J têm uma aresta lógica com dois traços; J mantém sua marca inferior. W tem uma aresta com dois cortes diagonais. Esses atributos não criam vértices ou letras extras. Marcas são pequenos círculos vazados, distintos das estrelas dos vértices.
+- Os extremos permanecem fixos. A microgeometria usa um stream Mulberry32 separado, derivado de `glyphs-v1`, seed, ID da instância, letra e tentativa. Alterar a injeção não consome sorteios da árvore. A versão exibida combina `segments-v3` e `glyphs-v1`.
+- Vértices internos recebem offsets de até ±10% longitudinal e ±15% transversal. Marcas recebem jitter longitudinal de até ±8% da aresta (reduzido quando necessário para manter a ordem) e afastamento de até ±20%. Pares `:` usam a mesma posição longitudinal. O lado é sempre global: a marca superior tem Y menor que sua âncora, independentemente da direção de leitura. Em arestas quase verticais (`abs(dx / comprimento) < 0.25`), a convenção é superior acima/direita e inferior abaixo/esquerda, evitando sobreposição à própria aresta.
+- A validação verifica cruzamentos, sobreposição de arestas e aproximações entre vértices, marcas e arestas. Pontos de fronteira compartilhados são permitidos; os demais vértices têm IDs próprios. Sete tentativas determinísticas reduzem a deformação até incluir a forma regular. Se persistirem conflitos, o resultado com menos diagnósticos é exibido **com aviso**. O ajuste atual não refaz a macrogeometria para acomodar um glifo largo.
+- Os testes cobrem os 26 grafos e suas marcas, ordem de caminhos após rotação, deformações, limites fixos, reprodução e detecção de conflitos. As formas regulares foram verificadas em 24 orientações e comprimentos 30/100 (1.248 casos). A validação ainda não prova decodificação única, não garante reserva espacial de subárvores e não verifica colisões com rótulos ou halos decorativos. As margens para traços duplos/cortes são conservadoras.
+
+Exportação SVG/PNG e resolução global de colisões após a injeção **ainda não estão implementadas**.
 
 ### Publicação no GitHub Pages
 

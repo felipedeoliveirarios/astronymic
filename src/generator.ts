@@ -1,4 +1,4 @@
-/** Prototype: macrogeometry only. Each edge is a slot for one future glyph. */
+/** Macrogeometry: each edge fixes the entry and exit points for one glyph. */
 export const ALGORITHM_VERSION = 'segments-v3';
 export const MAX_LETTERS = 120;
 export type Point = { x: number; y: number };
