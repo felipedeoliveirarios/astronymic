@@ -58,3 +58,31 @@ test('Astronymic central continuation bends back and forth instead of flattening
   }
   assert.equal(result.crossings, 0);
 });
+
+test('debug data describes actual branching trials, leaves and reserved sectors', () => {
+  assert.deepEqual(generate('Astronymic').rootBranching, {
+    probability: 0.5,
+    trials: [{ probability: 0.5, success: true }, { probability: 0.25, success: false }],
+    inheritedProbability: 0.25,
+    stop: 'failure',
+  });
+  assert.equal(generate('A').rootBranching.stop, 'budget');
+  assert.deepEqual(generate('A').rootBranching.trials, []);
+  assert.equal(generate('').rootBranching.stop, 'leaf');
+  for (let seed = 0; seed < 20; seed++) {
+    const result = generate('ABCDEFGHIJKLMNOPQRSTUVWXYZ', String(seed));
+    const check = (branching: typeof result.rootBranching, children: Segment[]) => {
+      assert.equal(children.length, branching.stop === 'leaf' ? 0 : 1 + branching.trials.filter(t => t.success).length);
+      assert.ok(branching.trials.slice(0, -1).every(t => t.success), 'failure must terminate trials');
+      if (branching.stop === 'failure') assert.equal(branching.trials.at(-1)?.success, false);
+      for (const child of children) assert.equal(child.debug.branching.probability, branching.inheritedProbability);
+    };
+    check(result.rootBranching, result.segments.filter(s => s.parentId === null));
+    for (const segment of result.segments) {
+      const { sectorLow, sectorWidth, offset, branching } = segment.debug;
+      assert.ok(segment.angle > sectorLow && segment.angle < sectorLow + sectorWidth);
+      assert.ok(Math.abs(offset) <= sectorWidth * 0.45 + 1e-12);
+      check(branching, segment.children);
+    }
+  }
+});

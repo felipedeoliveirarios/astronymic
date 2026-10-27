@@ -2,6 +2,12 @@
 export const ALGORITHM_VERSION = 'segments-v3';
 export const MAX_LETTERS = 120;
 export type Point = { x: number; y: number };
+export type Branching = {
+  probability: number;
+  trials: { probability: number; success: boolean }[];
+  inheritedProbability: number;
+  stop: 'failure' | 'budget' | 'leaf';
+};
 export type Segment = {
   id: number;
   parentId: number | null;
@@ -11,6 +17,7 @@ export type Segment = {
   length: number;
   angle: number;
   children: Segment[];
+  debug: { sectorLow: number; sectorWidth: number; offset: number; branching: Branching };
 };
 export type Constellation = {
   normalized: string;
@@ -19,6 +26,7 @@ export type Constellation = {
   segments: Segment[];
   crossings: number;
   attempts: number;
+  rootBranching: Branching;
 };
 
 /** Initial text policy: decompose accents, uppercase, retain ASCII A–Z only. */
@@ -49,22 +57,27 @@ function clockwise(angle: number, reference: number): number {
   return ((angle - reference) % TAU + TAU) % TAU;
 }
 
-type Slot = { children: Slot[] };
-/** Reserve a mandatory continuation first, then add only nonempty branches. */
-function topology(count: number, probability: number, random: () => number): Slot[] {
-  if (!count) return [];
+type Slot = { children: Slot[]; branching: Branching };
+/** Record the actual decisions without consuming any extra random samples. */
+function topology(count: number, probability: number, random: () => number): Slot {
+  const branching: Branching = { probability, trials: [], inheritedProbability: probability, stop: count ? 'budget' : 'leaf' };
+  if (!count) return { children: [], branching };
   let childCount = 1;
   let inherited = probability;
-  while (childCount < count && random() < inherited) {
+  while (childCount < count) {
+    const success = random() < inherited;
+    branching.trials.push({ probability: inherited, success });
+    if (!success) { branching.stop = 'failure'; break; }
     childCount++;
     inherited /= 2;
   }
   if (childCount === 1) inherited = Math.min(1, probability * 2);
+  branching.inheritedProbability = inherited;
   const budgets = Array<number>(childCount).fill(1);
   for (let remaining = count - childCount; remaining > 0; remaining--) {
     budgets[Math.floor(random() * childCount)]++;
   }
-  return budgets.map(budget => ({ children: topology(budget - 1, inherited, random) }));
+  return { children: budgets.map(budget => topology(budget - 1, inherited, random)), branching };
 }
 
 export function intersects(a: Segment, b: Segment): boolean {
@@ -110,18 +123,19 @@ export function generate(text: string, customSeed?: string): Constellation {
           letter: normalized[segments.length], start,
           end: { x: start.x + Math.cos(c.angle) * c.length, y: start.y + Math.sin(c.angle) * c.length },
           length: c.length, angle: c.angle, children: [],
+          debug: { sectorLow: c.sectorLow, sectorWidth: c.sectorWidth, offset: c.shift, branching: c.slot.branching },
         };
         segments.push(segment);
         segment.children = layout(c.slot.children, segment.end, c.sectorLow, c.sectorWidth, segment, c.shift);
         return segment;
       });
     }
-    layout(roots, { x: 0, y: 0 }, -Math.PI / 6, Math.PI * 4 / 3, null, 0);
+    layout(roots.children, { x: 0, y: 0 }, -Math.PI / 6, Math.PI * 4 / 3, null, 0);
     let crossings = 0;
     for (let i = 0; i < segments.length; i++) for (let j = i + 1; j < segments.length; j++) {
       if (intersects(segments[i], segments[j])) crossings++;
     }
-    const result = { normalized, seed, version: ALGORITHM_VERSION, segments, crossings, attempts: attempt + 1 };
+    const result = { normalized, seed, version: ALGORITHM_VERSION, segments, crossings, attempts: attempt + 1, rootBranching: roots.branching };
     if (!best || crossings < best.crossings) best = result;
     if (crossings === 0) return result;
   }
