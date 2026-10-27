@@ -5,8 +5,8 @@ import type { Point } from './generator.ts';
 export const ATLAS_EDGE_MASK_ID = 'atlas-star-gaps';
 export const VERTEX_HALO_RADIUS = 7;
 export const INTERNAL_HALO_RADIUS = 5;
-export const ORIGIN_RING_RADIUS = 18;
-export const ORIGIN_STAR_RADIUS = 5.2;
+export const ORIGIN_RING_RADIUS = 13.5;
+export const ORIGIN_STAR_RADIUS = 3.9;
 const LINE_HALO_GAP = 2;
 const STAR_SCALE = 2;
 
