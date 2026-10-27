@@ -144,7 +144,7 @@ Impedir inversão de ordem, sobreposição com vértices, troca de lado global o
 
 - Aplicação **inteiramente frontend**, em formato SPA; Angular/TypeScript e SVG são opções adequadas de implementação.
 - Visual de **pôster de constelação**: fundo escuro estrelado, traços delicados e estrelas nos vértices.
-- **Título editável**: o texto do título é a entrada da geração; a constelação aparece abaixo.
+- **Título editável diretamente no atlas**: o texto do título é a entrada da geração; a constelação aparece abaixo, sem um campo de texto separado. O atlas ocupa a página inteira, com Astronymic no canto superior esquerdo.
 - Atualizar após pequeno **debounce** (referência: ~500 ms), com transição/revelação suave, sem espera artificial desnecessária.
 - **Menu lateral recolhível de referência:** dicionário completo dos 26 glifos, convenções, regras de escrita/leitura e nota sobre a adaptação de J.
 - **Menu lateral recolhível de geração:** seed padrão derivada do texto, seed personalizada e opção de gerar nova seed; parâmetros visuais poderão ser expostos progressivamente.
@@ -201,7 +201,7 @@ O build é gerado em `dist/`. Não há chaves, banco de dados ou variáveis de a
 ### O que esta versão faz
 
 - Gera somente a **árvore de segmentos entrada–saída**, com uma letra por segmento e ordem DFS angular horária.
-- Oferece texto editável, debounce de 500 ms, seed automática/personalizada, nova seed aleatória e indicação opcional de ordem/letras.
+- O atlas ocupa a página inteira, com título editável diretamente no pôster e debounce de 500 ms. O menu compacto **Ajustes**, inicialmente recolhido no canto superior direito, reúne seed automática/personalizada, nova seed aleatória, toggles de ordem/letras e debug, e informações de leitura. Fecha com Escape ou clique fora; Enter encerra a edição do título, e colagem usa somente texto simples. Mensagens visíveis ficam reservadas para erros e cruzamentos; contagem de letras, seed efetiva e versão ficam dentro do menu.
 - O toggle **Debug: setores e branching** sobrepõe leques dos setores locais de cada segmento e os percentuais realmente testados em cada junção (incluindo a origem). `✓` indica ramo criado e `×` a primeira falha; folhas e esgotamento do orçamento aparecem como `fim` e `sem teste`. Tooltips detalham a abertura, o offset e a probabilidade herdada. Os leques têm raio ilustrativo e não representam uma reserva espacial garantida de toda a subárvore. A instrumentação não consome novos sorteios nem altera a geometria/versão do algoritmo.
 - Usa FNV-1a (unidades UTF-16) e Mulberry32, com versão de geração `segments-v3` (compensação angular com ruído de até ±20% da abertura do setor). O namespace de aleatoriedade `segments-v1` foi mantido para isolar a mudança de geometria, preservando os sorteios de topologia e comprimentos por tentativa. A seed aleatória vem de Web Crypto e é mostrada para reprodução; a geração usa exclusivamente o PRNG determinístico.
 - Normalização inicial: NFD, remoção de marcas Unicode, conversão para maiúsculas e retenção de A–Z. Espaços, números e pontuação são descartados. Limite: 120 letras após normalização; textos maiores recebem erro sem truncamento silencioso.
