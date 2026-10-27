@@ -15,11 +15,14 @@ export default {
   showDebug: 'Debug: setores e ramificação',
   debugHelp:
     'Leques mostram os setores locais. Percentuais indicam os testes de ramificação: ✓ criou ramo, × encerrou. “Sem teste” indica falta de letras para outro ramo; “fim” é uma folha. Passe o mouse nos setores e percentuais para mais detalhes. Os leques não delimitam toda a subárvore.',
+  exportHeading: 'Exportar constelação',
+  exportHelp:
+    'Escolha o formato e baixe o mapa como uma imagem PNG em alta resolução.',
   exportFormat: 'Formato da imagem',
   formatPoster: 'Pôster · 4:5',
   formatLandscape: 'Horizontal · 16:9',
   formatPortrait: 'Vertical · 9:16',
-  exportPng: 'Exportar imagem (PNG)',
+  exportPng: 'Baixar imagem PNG',
   exporting: 'Exportando imagem…',
   exportSuccess: 'Imagem exportada.',
   exportError: 'Não foi possível exportar a imagem. Tente novamente.',

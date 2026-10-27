@@ -15,11 +15,14 @@ export default {
   showDebug: 'Debug: sectores y ramificación',
   debugHelp:
     'Los abanicos muestran los sectores locales. Los porcentajes indican las pruebas de ramificación: ✓ creó una rama, × terminó. «Sin prueba» indica que no hay suficientes letras para otra rama; «fin» indica una hoja. Pasa el cursor por los sectores y porcentajes para ver detalles. Los abanicos no delimitan todo el subárbol.',
+  exportHeading: 'Exportar constelación',
+  exportHelp:
+    'Elige el formato y descarga el mapa como una imagen PNG de alta resolución.',
   exportFormat: 'Formato de imagen',
   formatPoster: 'Póster · 4:5',
   formatLandscape: 'Horizontal · 16:9',
   formatPortrait: 'Vertical · 9:16',
-  exportPng: 'Exportar imagen (PNG)',
+  exportPng: 'Descargar imagen PNG',
   exporting: 'Exportando imagen…',
   exportSuccess: 'Imagen exportada.',
   exportError: 'No se pudo exportar la imagen. Inténtalo de nuevo.',

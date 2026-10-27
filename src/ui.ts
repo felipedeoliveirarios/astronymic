@@ -18,14 +18,23 @@ export function mountAtlas(text: Translator) {
           <p id="seed-help" class="help" data-i18n="seedHelp"></p>
           <button id="random" class="primary" type="button"><span data-i18n="randomSky"></span> <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 13L13 3M4 3h9v9" fill="none" stroke="currentColor" stroke-width="1.2"/></svg></button>
           <button id="reset" class="secondary" type="button" data-i18n="resetSeed"></button>
-          <label for="export-format" data-i18n="exportFormat"></label>
-          <select id="export-format" class="language-select"><option value="4:5" data-i18n="formatPoster"></option><option value="16:9" data-i18n="formatLandscape"></option><option value="9:16" data-i18n="formatPortrait"></option></select>
-          <button id="export-png" class="secondary" type="button" data-i18n="exportPng"></button>
-          <p id="export-status" class="help" role="status" aria-live="polite" hidden></p>
           <div class="rule"></div>
           <label class="check"><input id="labels" type="checkbox" checked /><span data-i18n="showLabels"></span></label>
           <label class="check"><input id="debug" type="checkbox" aria-describedby="debug-help" /><span data-i18n="showDebug"></span></label>
           <p id="debug-help" class="help" hidden data-i18n="debugHelp"></p>
+        </div>
+      </details>
+      <details id="export-menu" class="controls-menu" name="atlas-menu">
+        <summary aria-label="" data-i18n-aria-label="exportHeading" title="" data-i18n-title="exportHeading">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg>
+        </summary>
+        <div class="controls export-panel">
+          <h2 class="panel-title" data-i18n="exportHeading"></h2>
+          <p class="help" data-i18n="exportHelp"></p>
+          <label for="export-format" data-i18n="exportFormat"></label>
+          <select id="export-format" class="language-select"><option value="4:5" data-i18n="formatPoster"></option><option value="16:9" data-i18n="formatLandscape"></option><option value="9:16" data-i18n="formatPortrait"></option></select>
+          <button id="export-png" class="primary" type="button" data-i18n="exportPng"></button>
+          <p id="export-status" class="help" role="status" aria-live="polite" hidden></p>
         </div>
       </details>
       <details id="info-menu" class="controls-menu" name="atlas-menu">

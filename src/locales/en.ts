@@ -15,11 +15,14 @@ export default {
   showDebug: 'Debug: sectors and branching',
   debugHelp:
     'Fans show local sectors. Percentages indicate branching trials: ✓ created a branch, × stopped. “No trial” means there are not enough letters for another branch; “end” marks a leaf. Hover over sectors and percentages for details. Fans do not bound the entire subtree.',
+  exportHeading: 'Export constellation',
+  exportHelp:
+    'Choose a format and download the map as a high-resolution PNG image.',
   exportFormat: 'Image format',
   formatPoster: 'Poster · 4:5',
   formatLandscape: 'Landscape · 16:9',
   formatPortrait: 'Portrait · 9:16',
-  exportPng: 'Export image (PNG)',
+  exportPng: 'Download PNG image',
   exporting: 'Exporting image…',
   exportSuccess: 'Image exported.',
   exportError: 'Could not export the image. Please try again.',
