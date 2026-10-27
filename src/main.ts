@@ -1,6 +1,6 @@
 import './style.css';
 import { ALPHABET, injectGlyph, injectConstellation, type Injection } from './glyphs.ts';
-import { appendGlyphs } from './glyph-renderer.ts';
+import { appendGlyphs, sparkle } from './glyph-renderer.ts';
 import { generate, normalizeText, MAX_LETTERS, type Constellation, type Branching } from './generator.ts';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -93,9 +93,9 @@ function render(result: Constellation, injection: Injection) {
     svg.append(overlay);
   }
   appendGlyphs(svg, injection.glyphs);
-  svg.append(element('circle', { cx: 0, cy: 0, r: 9, class: 'origin-ring' }), element('circle', { cx: 0, cy: 0, r: 2.6, class: 'star' }));
+  svg.append(element('circle', { cx: 0, cy: 0, r: 9, class: 'origin-ring' }), sparkle({ x: 0, y: 0 }, 2.6));
   for (const s of result.segments) {
-    svg.append(element('circle', { cx: s.end.x, cy: s.end.y, r: 7, class: 'halo' }), element('circle', { cx: s.end.x, cy: s.end.y, r: 2.7, class: 'star' }));
+    svg.append(element('circle', { cx: s.end.x, cy: s.end.y, r: 7, class: 'halo' }), sparkle(s.end, 2.7));
     if (labels.checked) {
       const text = element('text', { x: (s.start.x + s.end.x) / 2 + 8, y: (s.start.y + s.end.y) / 2 - 8, class: 'glyph-label' });
       text.textContent = `${s.id + 1} · ${s.letter}`;

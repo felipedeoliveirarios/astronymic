@@ -1,5 +1,6 @@
 import type { Glyph, GlyphEdge } from './glyphs.ts';
 import { distance, pointOnEdge } from './geometry.ts';
+import type { Point } from './generator.ts';
 
 const NS = 'http://www.w3.org/2000/svg';
 function svg<K extends keyof SVGElementTagNameMap>(name: K, attrs: Record<string, string | number> = {}) {
@@ -8,6 +9,15 @@ function svg<K extends keyof SVGElementTagNameMap>(name: K, attrs: Record<string
   return node;
 }
 const xy = (p: { x: number; y: number }) => `${p.x} ${p.y}`;
+
+/** Four tips with inward-curving sides, inside the original circular footprint. */
+export function sparkle(point: Point, radius: number, className = 'star', attrs: Record<string, string | number> = {}): SVGPathElement {
+  const { x, y } = point;
+  const inset = radius * 0.18;
+  const d = `M ${x} ${y - radius} Q ${x + inset} ${y - inset} ${x + radius} ${y} Q ${x + inset} ${y + inset} ${x} ${y + radius} Q ${x - inset} ${y + inset} ${x - radius} ${y} Q ${x - inset} ${y - inset} ${x} ${y - radius} Z`;
+  return svg('path', { d, class: className, ...attrs });
+}
+
 function appendEdge(group: SVGGElement, edge: GlyphEdge) {
   const start = edge.from.point, end = edge.to.point;
   const length = distance(start, end);
@@ -47,15 +57,14 @@ export function appendGlyphs(parent: SVGElement, glyphs: Glyph[], includeBoundar
     }
     for (const mark of glyph.marks) group.append(svg('circle', {
       cx: mark.point.x, cy: mark.point.y, r: mark.radius * 2.6, class: 'halo glyph-mark-halo',
-    }), svg('circle', {
-      cx: mark.point.x, cy: mark.point.y, r: mark.radius, class: 'star glyph-mark',
+    }), sparkle(mark.point, mark.radius, 'star glyph-mark', {
       'data-side': mark.side === -1 ? 'above' : 'below', 'data-edge-id': mark.edgeId,
     }));
     for (const vertex of glyph.vertices) {
       if ((vertex.boundary && !includeBoundaries) || drawn.has(vertex.id)) continue;
       drawn.add(vertex.id);
       group.append(svg('circle', { cx: vertex.point.x, cy: vertex.point.y, r: 5, class: 'halo' }),
-        svg('circle', { cx: vertex.point.x, cy: vertex.point.y, r: 2.5, class: `star ${vertex.boundary ? 'boundary-star' : 'internal-star'}` }));
+        sparkle(vertex.point, 2.5, `star ${vertex.boundary ? 'boundary-star' : 'internal-star'}`));
     }
     parent.append(group);
   }
