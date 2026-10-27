@@ -1,7 +1,8 @@
 import { randomSource, type Constellation, type Point, type Segment } from './generator.ts';
+import { MARK_HALO_SCALE, visibleEdgeSpan } from './appearance.ts';
 import { distance, intersection, pointEdgeDistance, pointOnEdge } from './geometry.ts';
 
-export const GLYPH_VERSION = 'glyphs-v1';
+export const GLYPH_VERSION = 'glyphs-v2';
 export const ALPHABET = {
   A: 'oo', B: 'o(o/)o', C: 'o(/o)o', D: 'o^_^_o', E: 'o^o', F: 'o_^^o',
   G: 'o___o', H: 'o(oo/)o', I: 'o_o', J: 'o=_o', K: 'o^:o', L: 'o_:o',
@@ -22,7 +23,7 @@ export type Glyph = {
   segmentId: number; letter: Letter; notation: string; vertices: Vertex[];
   paths: Vertex[][]; edges: GlyphEdge[]; marks: GlyphMark[];
 };
-export type GeometryIssue = { kind: 'edge-intersection' | 'vertex-clearance' | 'mark-clearance'; items: [string, string] };
+export type GeometryIssue = { kind: 'edge-intersection' | 'vertex-clearance' | 'mark-clearance' | 'mark-range'; items: [string, string] };
 export type Injection = { version: string; glyphs: Glyph[]; issues: GeometryIssue[]; attempts: number };
 
 /** Internal `o`s split edges. Colons are a single longitudinal slot with two marks. */
@@ -50,25 +51,25 @@ export function definition(letter: string): GlyphDefinition {
   return { letter: key, notation, paths: paths.map(parsePath) };
 }
 
-/** Global upper side, with an explicit above-right convention for near-vertical edges. */
+/** Global upper normal; exactly vertical edges use a tiny above-right displacement. */
 export function upperDirection(start: Point, end: Point): Point {
   const length = distance(start, end);
   const ux = (end.x - start.x) / length, uy = (end.y - start.y) / length;
-  if (Math.abs(ux) < 0.25) {
-    const norm = Math.hypot(1, 0.35);
-    return { x: 1 / norm, y: -0.35 / norm };
+  if (Math.abs(ux) < 1e-7) {
+    const norm = Math.hypot(1, 0.02);
+    return { x: 1 / norm, y: -0.02 / norm };
   }
   return ux > 0 ? { x: uy, y: -ux } : { x: -uy, y: ux };
 }
 
 /** Fixed boundaries, ordered internal vertices, and a separate deterministic micro stream. */
-export function injectGlyph(segment: GlyphSlot, seed: string, deformation = 1, attempt = 0): Glyph {
+export function injectGlyph(segment: GlyphSlot, seed: string, deformation = 1, attempt = 0, reference = false): Glyph {
   const def = definition(segment.letter);
   const length = distance(segment.start, segment.end);
   if (length < 1e-7) throw new RangeError('A glyph needs distinct entry and exit points.');
   if (deformation < 0 || deformation > 1) throw new RangeError('Deformation must be between zero and one.');
   const ux = (segment.end.x - segment.start.x) / length, uy = (segment.end.y - segment.start.y) / length;
-  const random = randomSource(`${GLYPH_VERSION}:${seed}:${segment.id}:${segment.letter}:${attempt}`);
+  const random = randomSource(`glyphs-v1:${seed}:${segment.id}:${segment.letter}:${attempt}`);
   const entry: Vertex = { id: segment.parentId === null ? 'origin' : `boundary:${segment.parentId}`, point: segment.start, boundary: true };
   const exit: Vertex = { id: `boundary:${segment.id}`, point: segment.end, boundary: true };
   const glyph: Glyph = { segmentId: segment.id, letter: def.letter, notation: def.notation, vertices: [entry, exit], paths: [], edges: [], marks: [] };
@@ -93,17 +94,26 @@ export function injectGlyph(segment: GlyphSlot, seed: string, deformation = 1, a
       glyph.edges.push(edge);
       const edgeLength = distance(edge.from.point, edge.to.point);
       const upper = upperDirection(edge.from.point, edge.to.point);
+      const span = visibleEdgeSpan(edge, reference);
+      // A marked edge reserves longitudinal slots inside the visible stroke, not its halos.
+      // Extremely short edges keep a centered slot; validation reports any cramped geometry.
+      const available = Math.max(0, span.end - span.start);
+      const step = available / (spec.marks.length + 1);
       const spacing = 1 / (spec.marks.length + 1);
+      const tangent = { x: (edge.to.point.x - edge.from.point.x) / edgeLength, y: (edge.to.point.y - edge.from.point.y) / edgeLength };
+      const drift = upper.x * tangent.x + upper.y * tangent.y;
       for (const [slot, sides] of spec.marks.entries()) {
-        // Clamp jitter by the slot gap so longitudinal ordering never reverses.
-        const t = (slot + 1) * spacing + (random() - 0.5) * 2 * Math.min(0.08, spacing * 0.2) * deformation;
-        const anchor = pointOnEdge(edge.from.point, edge.to.point, t);
+        const jitter = (random() - 0.5) * 2 * Math.min(0.08 * edgeLength, step * 0.2) * deformation;
+        const longitudinal = available > 0 ? span.start + (slot + 1) * step + jitter : edgeLength / 2;
+        const anchor = pointOnEdge(edge.from.point, edge.to.point, longitudinal / edgeLength);
+        const radius = Math.min(1.5, edgeLength * spacing * 0.15, available > 0 ? step * 0.3 / MARK_HALO_SCALE : 1.5);
         for (const side of sides) {
-          const gap = Math.max(edge.style === 'double' ? 7 : 4.5, Math.min(8, edgeLength * 0.075)) * (1 + (random() - 0.5) * 0.4 * deformation);
+          const sampledGap = Math.max(edge.style === 'double' ? 7 : 4.5, Math.min(8, edgeLength * 0.075)) * (1 + (random() - 0.5) * 0.4 * deformation);
+          // Near exactly vertical edges, reserve room for the tiny global up/down shift too.
+          const gap = available > 0 && Math.abs(drift) > 1e-10 ? Math.min(sampledGap, step * 0.15 / Math.abs(drift)) : sampledGap;
           glyph.marks.push({
             id: `${edge.id}:slot:${slot}:side:${side}`, edgeId: edge.id, slot, side, anchor,
-            point: { x: anchor.x - side * upper.x * gap, y: anchor.y - side * upper.y * gap },
-            radius: Math.min(1.5, edgeLength * spacing * 0.15),
+            point: { x: anchor.x - side * upper.x * gap, y: anchor.y - side * upper.y * gap }, radius,
           });
         }
       }
@@ -113,7 +123,7 @@ export function injectGlyph(segment: GlyphSlot, seed: string, deformation = 1, a
 }
 
 /** Only common graph boundary IDs may touch. Double traces remain one logical edge. */
-export function validateGlyphs(glyphs: Glyph[]): GeometryIssue[] {
+export function validateGlyphs(glyphs: Glyph[], reference = false): GeometryIssue[] {
   const edges = glyphs.flatMap(g => g.edges);
   const marks = glyphs.flatMap(g => g.marks);
   const vertices = [...new Map(glyphs.flatMap(g => g.vertices).map(v => [v.id, v])).values()];
@@ -132,7 +142,15 @@ export function validateGlyphs(glyphs: Glyph[]): GeometryIssue[] {
   for (let i = 0; i < vertices.length; i++) for (let j = i + 1; j < vertices.length; j++) {
     if (distance(vertices[i].point, vertices[j].point) < 5.4) issues.push({ kind: 'vertex-clearance', items: [vertices[i].id, vertices[j].id] });
   }
+  const edgeById = new Map(edges.map(edge => [edge.id, edge]));
   for (const mark of marks) {
+    const ownEdge = edgeById.get(mark.edgeId)!;
+    const span = visibleEdgeSpan(ownEdge, reference);
+    const ux = (ownEdge.to.point.x - ownEdge.from.point.x) / span.length;
+    const uy = (ownEdge.to.point.y - ownEdge.from.point.y) / span.length;
+    const projection = (mark.point.x - ownEdge.from.point.x) * ux + (mark.point.y - ownEdge.from.point.y) * uy;
+    const halo = mark.radius * MARK_HALO_SCALE;
+    if (projection - halo < span.start - 1e-7 || projection + halo > span.end + 1e-7) issues.push({ kind: 'mark-range', items: [mark.id, ownEdge.id] });
     for (const edge of edges) {
       if (pointEdgeDistance(mark.point, edge.from.point, edge.to.point) < mark.radius + envelope(edge) + 0.5) issues.push({ kind: 'mark-clearance', items: [mark.id, edge.id] });
     }

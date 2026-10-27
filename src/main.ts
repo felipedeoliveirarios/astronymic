@@ -1,5 +1,6 @@
 import '@fontsource/playfair-display/400.css';
 import './style.css';
+import { placeGlyphLabels } from './labels.ts';
 import { ALPHABET, injectGlyph, injectConstellation, type Injection } from './glyphs.ts';
 import { appendGlyphs, sparkle, VERTEX_HALO_RADIUS, ORIGIN_RING_RADIUS, ORIGIN_STAR_RADIUS, ATLAS_EDGE_MASK_ID } from './glyph-renderer.ts';
 import { generate, normalizeText, MAX_LETTERS, type Constellation, type Branching } from './generator.ts';
@@ -25,7 +26,7 @@ app.innerHTML = `
           <label class="check"><input id="debug" type="checkbox" aria-describedby="debug-help" /><span>Debug: setores e branching</span></label>
           <p id="debug-help" class="help" hidden>Leques mostram os setores locais. Percentuais indicam os testes de ramificação: ✓ criou ramo, × encerrou. “Sem teste” indica falta de letras para outro ramo; “fim” é uma folha. Passe o mouse nos setores e percentuais para mais detalhes. Os leques não delimitam toda a subárvore.</p>
           <details class="reading-help"><summary>Como ler</summary><p>Comece na origem e siga os segmentos em profundidade. Em cada junção, percorra os ramos no sentido horário a partir da direção de retorno. Cada letra é um glifo: os ramos internos e as marcas preservam sua identidade. Marcas acima/abaixo seguem a vertical da página.</p></details>
-          <details class="reading-help alphabet-help"><summary>Alfabeto A–Z</summary><div id="glyph-reference"></div><p>As estrelas maiores são vértices; as menores são marcas. A entrada está à esquerda e a saída à direita em cada exemplo. B/C e P/Q preservam a ordem dos caminhos. J usa traço duplo e marca inferior para se distinguir de I.</p><p>Em arestas quase verticais, marcas superiores ficam acima e à direita do ponto de referência; inferiores, abaixo e à esquerda.</p></details>
+          <details class="reading-help alphabet-help"><summary>Alfabeto A–Z</summary><div id="glyph-reference"></div><p>As estrelas maiores são vértices; as menores são marcas. A entrada está à esquerda e a saída à direita em cada exemplo. B/C e P/Q preservam a ordem dos caminhos. J usa traço duplo e marca inferior para se distinguir de I.</p><p>Marcas ficam nas faixas laterais da linha, dentro de seu comprimento visível. Em arestas exatamente verticais, superiores ficam um pouco acima e à direita; inferiores, abaixo e à esquerda.</p></details>
           <div class="metadata"><span id="count"></span><span id="version"></span><span id="seed-caption"></span></div>
         </div>
       </details>
@@ -63,7 +64,11 @@ function render(result: Constellation, injection: Injection) {
   document.querySelector('#count')!.textContent = `${String(result.segments.length).padStart(2, '0')} LETRAS`;
   document.querySelector('#seed-caption')!.textContent = `SEED / ${result.seed}`;
   document.querySelector('#version')!.textContent = `${result.version} · ${injection.version}`.toUpperCase();
-  const points = [{ x: 0, y: 0 }, ...injection.glyphs.flatMap(g => [...g.vertices.map(v => v.point), ...g.marks.map(m => m.point)])];
+  const context = document.createElement('canvas').getContext('2d')!;
+  context.font = `8px ${getComputedStyle(drawing).fontFamily}`;
+  const placements = labels.checked ? placeGlyphLabels(injection.glyphs, text => context.measureText(text).width + (text.length - 1)) : [];
+  const points = [{ x: 0, y: 0 }, ...injection.glyphs.flatMap(g => [...g.vertices.map(v => v.point), ...g.marks.map(m => m.point)]),
+    ...placements.flatMap(l => [{x:l.box.x,y:l.box.y},{x:l.box.x+l.box.width,y:l.box.y+l.box.height}])];
   const minX = Math.min(...points.map(p => p.x)) - 60;
   const minY = Math.min(...points.map(p => p.y)) - 60;
   const width = Math.max(250, Math.max(...points.map(p => p.x)) - minX + 60);
@@ -97,11 +102,11 @@ function render(result: Constellation, injection: Injection) {
   svg.append(element('circle', { cx: 0, cy: 0, r: ORIGIN_RING_RADIUS, class: 'origin-ring' }), sparkle({ x: 0, y: 0 }, ORIGIN_STAR_RADIUS, 'star origin-star'));
   for (const s of result.segments) {
     svg.append(element('circle', { cx: s.end.x, cy: s.end.y, r: VERTEX_HALO_RADIUS, class: 'halo' }), sparkle(s.end, 2.7));
-    if (labels.checked) {
-      const text = element('text', { x: (s.start.x + s.end.x) / 2 + 8, y: (s.start.y + s.end.y) / 2 - 8, class: 'glyph-label' });
-      text.textContent = `${s.id + 1} · ${s.letter}`;
-      svg.append(text);
-    }
+  }
+  for (const placement of placements) {
+    const text = element('text', { x: placement.center.x, y: placement.center.y, class: 'glyph-label', 'text-anchor': 'middle', 'dominant-baseline': 'central' });
+    text.textContent = placement.text;
+    svg.append(text);
   }
   if (debug.checked && result.segments.length) {
     const nodes = [
@@ -191,7 +196,7 @@ for (const [index, [letter, notation]] of Object.entries(ALPHABET).entries()) {
   const row = document.createElement('div'); row.className = 'reference-row';
   const label = document.createElement('span'); label.className = 'reference-letter'; label.textContent = letter;
   const preview = element('svg', { viewBox: '-10 -38 120 76', role: 'img', 'aria-label': `Glifo ${letter}: ${notation}; entrada à esquerda, saída à direita` });
-  const glyph = injectGlyph({ id: index, parentId: null, letter, start: { x: 0, y: 0 }, end: { x: 100, y: 0 } }, 'reference', 0);
+  const glyph = injectGlyph({ id: index, parentId: null, letter, start: { x: 0, y: 0 }, end: { x: 100, y: 0 } }, 'reference', 0, 0, true);
   appendGlyphs(preview, [glyph], true);
   const code = document.createElement('code'); code.textContent = notation;
   row.append(label, preview, code); reference.append(row);

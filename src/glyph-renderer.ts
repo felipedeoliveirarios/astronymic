@@ -1,14 +1,9 @@
-import type { Glyph, GlyphEdge, Vertex } from './glyphs.ts';
+import type { Glyph, GlyphEdge } from './glyphs.ts';
 import { distance, pointOnEdge } from './geometry.ts';
 import type { Point } from './generator.ts';
 
-export const ATLAS_EDGE_MASK_ID = 'atlas-star-gaps';
-export const VERTEX_HALO_RADIUS = 7;
-export const INTERNAL_HALO_RADIUS = 5;
-export const ORIGIN_RING_RADIUS = 13.5;
-export const ORIGIN_STAR_RADIUS = 3.9;
-const LINE_HALO_GAP = 2;
-const STAR_SCALE = 2;
+import { ATLAS_EDGE_MASK_ID, INTERNAL_HALO_RADIUS, ORIGIN_RING_RADIUS, LINE_HALO_GAP, STAR_SCALE, MARK_HALO_SCALE, vertexKeepout, visibleEdgeSpan } from './appearance.ts';
+export { ATLAS_EDGE_MASK_ID, VERTEX_HALO_RADIUS, ORIGIN_RING_RADIUS, ORIGIN_STAR_RADIUS } from './appearance.ts';
 
 const NS = 'http://www.w3.org/2000/svg';
 function svg<K extends keyof SVGElementTagNameMap>(name: K, attrs: Record<string, string | number> = {}) {
@@ -25,11 +20,6 @@ export function sparkle(point: Point, radius: number, className = 'star', attrs:
   const inset = radius * 0.18;
   const d = `M ${x} ${y - radius} Q ${x + inset} ${y - inset} ${x + radius} ${y} Q ${x + inset} ${y + inset} ${x} ${y + radius} Q ${x - inset} ${y + inset} ${x - radius} ${y} Q ${x - inset} ${y - inset} ${x} ${y - radius} Z`;
   return svg('path', { d, class: className, ...attrs });
-}
-
-function vertexKeepout(vertex: Vertex, reference: boolean): number {
-  const halo = reference || !vertex.boundary ? INTERNAL_HALO_RADIUS : vertex.id === 'origin' ? ORIGIN_RING_RADIUS + 0.5 : VERTEX_HALO_RADIUS;
-  return halo + LINE_HALO_GAP;
 }
 
 /** Clip strokes outside endpoint halos; graph coordinates and double traces stay intact. */
@@ -57,8 +47,9 @@ function appendEdge(group: SVGGElement, edge: GlyphEdge, reference: boolean) {
   const ux = (end.x - start.x) / length, uy = (end.y - start.y) / length;
   const line = (d: string, className = '') => group.append(svg('path', { d, class: `segment glyph-stroke ${className}` }));
   // End actual strokes before the mask boundary, leaving room for their round caps.
-  const fromClearance = vertexKeepout(edge.from, reference) + 0.5;
-  const toClearance = vertexKeepout(edge.to, reference) + 0.5;
+  const span = visibleEdgeSpan(edge, reference);
+  const fromClearance = span.start;
+  const toClearance = length - span.end;
   if (length <= fromClearance + toClearance) return;
   if (edge.style === 'double') {
     for (const side of [-1, 1]) {
@@ -97,7 +88,7 @@ export function appendGlyphs(parent: SVGElement, glyphs: Glyph[], includeBoundar
       appendEdge(edgeGroup, edge, includeBoundaries); group.append(edgeGroup);
     }
     for (const mark of glyph.marks) group.append(svg('circle', {
-      cx: mark.point.x, cy: mark.point.y, r: mark.radius * 2.6, class: 'halo glyph-mark-halo',
+      cx: mark.point.x, cy: mark.point.y, r: mark.radius * MARK_HALO_SCALE, class: 'halo glyph-mark-halo',
     }), sparkle(mark.point, mark.radius, 'star glyph-mark', {
       'data-side': mark.side === -1 ? 'above' : 'below', 'data-edge-id': mark.edgeId,
     }));
