@@ -1,6 +1,6 @@
 import './style.css';
 import { ALPHABET, injectGlyph, injectConstellation, type Injection } from './glyphs.ts';
-import { appendGlyphs, sparkle } from './glyph-renderer.ts';
+import { appendGlyphs, sparkle, VERTEX_HALO_RADIUS, ORIGIN_RING_RADIUS, ATLAS_EDGE_MASK_ID } from './glyph-renderer.ts';
 import { generate, normalizeText, MAX_LETTERS, type Constellation, type Branching } from './generator.ts';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -87,15 +87,15 @@ function render(result: Constellation, injection: Injection) {
       tooltip.textContent = `Segmento ${s.id + 1} (${s.letter}): setor ${(width * 180 / Math.PI).toFixed(1)}°, início ${(low * 180 / Math.PI).toFixed(1)}°, offset ${(s.debug.offset * 180 / Math.PI).toFixed(1)}°.`;
       wedge.append(tooltip);
       overlay.append(wedge, element('line', {
-        x1: s.start.x, y1: s.start.y, x2: s.end.x, y2: s.end.y, class: 'macro-guide',
+        x1: s.start.x, y1: s.start.y, x2: s.end.x, y2: s.end.y, class: 'macro-guide', mask: `url(#${ATLAS_EDGE_MASK_ID})`,
       }));
     }
     svg.append(overlay);
   }
   appendGlyphs(svg, injection.glyphs);
-  svg.append(element('circle', { cx: 0, cy: 0, r: 9, class: 'origin-ring' }), sparkle({ x: 0, y: 0 }, 2.6));
+  svg.append(element('circle', { cx: 0, cy: 0, r: ORIGIN_RING_RADIUS, class: 'origin-ring' }), sparkle({ x: 0, y: 0 }, 2.6));
   for (const s of result.segments) {
-    svg.append(element('circle', { cx: s.end.x, cy: s.end.y, r: 7, class: 'halo' }), sparkle(s.end, 2.7));
+    svg.append(element('circle', { cx: s.end.x, cy: s.end.y, r: VERTEX_HALO_RADIUS, class: 'halo' }), sparkle(s.end, 2.7));
     if (labels.checked) {
       const text = element('text', { x: (s.start.x + s.end.x) / 2 + 8, y: (s.start.y + s.end.y) / 2 - 8, class: 'glyph-label' });
       text.textContent = `${s.id + 1} · ${s.letter}`;
