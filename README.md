@@ -259,3 +259,7 @@ O workflow [`.github/workflows/pages.yml`](.github/workflows/pages.yml) executa 
 GitHub Free oferece Pages para repositórios públicos. Repositórios privados precisam de um plano compatível, como GitHub Pro ou Team. A privacidade do repositório não torna o site privado; no uso comum o site publicado é público. Organizações podem ter restrições adicionais de Actions e Pages.
 
 O build usa base relativa (`./`) para carregar os assets tanto em `/astronymic/` quanto em um domínio próprio. O app não usa rotas de histórico, portanto não exige fallback SPA no Pages.
+
+### Exportação de imagem
+
+O menu de ajustes permite baixar um PNG de 2400 × 3000 pixels com fundo escuro, título e constelação. A exportação respeita o toggle de letras e números, omite debug e controles e acontece inteiramente no navegador.

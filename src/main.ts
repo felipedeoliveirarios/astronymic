@@ -1,3 +1,4 @@
+import { exportPng } from './export.ts';
 import '@fontsource/playfair-display/800.css';
 import '@fontsource/jetbrains-mono/latin-400.css';
 import './style.css';
@@ -194,4 +195,25 @@ language.addEventListener('change', () => {
   if (alphabetMounted) translateAlphabet(reference, text);
   clearTimeout(timer);
   update();
+});
+
+const exportButton = document.querySelector<HTMLButtonElement>('#export-png')!;
+const exportStatus = document.querySelector<HTMLElement>('#export-status')!;
+exportButton.addEventListener('click', async () => {
+  clearTimeout(timer);
+  update();
+  if (title.getAttribute('aria-invalid') === 'true') return;
+  const svg = drawing.querySelector('svg');
+  if (!svg) return;
+  exportButton.disabled = true;
+  exportStatus.hidden = false;
+  exportStatus.textContent = text.text('exporting');
+  try {
+    await exportPng(svg, titleText());
+    exportStatus.textContent = text.text('exportSuccess');
+  } catch {
+    exportStatus.textContent = text.text('exportError');
+  } finally {
+    exportButton.disabled = false;
+  }
 });

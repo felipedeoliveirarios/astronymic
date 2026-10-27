@@ -15,6 +15,10 @@ export default {
   showDebug: 'Debug: setores e ramificação',
   debugHelp:
     'Leques mostram os setores locais. Percentuais indicam os testes de ramificação: ✓ criou ramo, × encerrou. “Sem teste” indica falta de letras para outro ramo; “fim” é uma folha. Passe o mouse nos setores e percentuais para mais detalhes. Os leques não delimitam toda a subárvore.',
+  exportPng: 'Exportar imagem (PNG)',
+  exporting: 'Exportando imagem…',
+  exportSuccess: 'Imagem exportada.',
+  exportError: 'Não foi possível exportar a imagem. Tente novamente.',
   credits: 'Código Astronymic criado por',
   infoHeading: 'Informações',
   readHeading: 'Como ler',
