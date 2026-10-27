@@ -74,8 +74,12 @@ function render(result: Constellation, injection: Injection) {
   document.querySelector('#seed-caption')!.textContent = `SEED / ${result.seed}`;
   document.querySelector('#version')!.textContent = `${result.version} · ${injection.version}`.toUpperCase();
   const context = document.createElement('canvas').getContext('2d')!;
-  context.font = `8px ${getComputedStyle(drawing).fontFamily}`;
-  const placements = labels.checked ? placeGlyphLabels(injection.glyphs, text => context.measureText(text).width + (text.length - 1)) : [];
+  const titleStyle = getComputedStyle(title);
+  context.font = `${titleStyle.fontStyle} ${titleStyle.fontWeight} 8px ${titleStyle.fontFamily}`;
+  const placements = labels.checked ? placeGlyphLabels(injection.glyphs, text => {
+    const metrics = context.measureText(text);
+    return Math.max(metrics.width, metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight) + (text.length - 1);
+  }) : [];
   const points = [{ x: 0, y: 0 }, ...injection.glyphs.flatMap(g => [...g.vertices.map(v => v.point), ...g.marks.map(m => m.point)]),
     ...placements.flatMap(l => [{x:l.box.x,y:l.box.y},{x:l.box.x+l.box.width,y:l.box.y+l.box.height}])];
   const minX = Math.min(...points.map(p => p.x)) - 60;
@@ -203,6 +207,8 @@ document.querySelector('#random')!.addEventListener('click', () => {
 });
 document.querySelector('#reset')!.addEventListener('click', () => { seed.value = ''; clearTimeout(timer); update(); });
 update();
+// Re-measure labels once the self-hosted font has replaced its initial fallback.
+void document.fonts.ready.then(update);
 
 // Canonical, undeformed reference previews share the exact production definitions/renderer.
 const reference = document.querySelector('#glyph-reference')!;
