@@ -1,4 +1,5 @@
 import '@fontsource/playfair-display/800.css';
+import '@fontsource/jetbrains-mono/400.css';
 import './style.css';
 import { placeGlyphLabels } from './labels.ts';
 import { ALPHABET, injectGlyph, injectConstellation, type Injection } from './glyphs.ts';
@@ -74,8 +75,8 @@ function render(result: Constellation, injection: Injection) {
   document.querySelector('#seed-caption')!.textContent = `SEED / ${result.seed}`;
   document.querySelector('#version')!.textContent = `${result.version} · ${injection.version}`.toUpperCase();
   const context = document.createElement('canvas').getContext('2d')!;
-  const titleStyle = getComputedStyle(title);
-  context.font = `${titleStyle.fontStyle} ${titleStyle.fontWeight} 8px ${titleStyle.fontFamily}`;
+  const labelFamily = getComputedStyle(drawing).getPropertyValue('--label-font-family');
+  context.font = `400 8px ${labelFamily}`;
   const placements = labels.checked ? placeGlyphLabels(injection.glyphs, text => {
     const metrics = context.measureText(text);
     return Math.max(metrics.width, metrics.actualBoundingBoxLeft + metrics.actualBoundingBoxRight) + (text.length - 1);
