@@ -1,4 +1,4 @@
-import '@fontsource/playfair-display/800-italic.css';
+import '@fontsource/playfair-display/800.css';
 import './style.css';
 import { placeGlyphLabels } from './labels.ts';
 import { ALPHABET, injectGlyph, injectConstellation, type Injection } from './glyphs.ts';

@@ -224,7 +224,7 @@ Exportação SVG/PNG e resolução global de colisões após a injeção **ainda
 
 ### Aparência e impressão
 
-O título e os rótulos dos glifos usam **Playfair Display ExtraBold Italic (800)** na tela e na impressão. O título usa espaçamento normal entre caracteres. A fonte é distribuída com a aplicação via Fontsource, sem requisições ao Google Fonts. A licença SIL OFL acompanha o site em `fonts/playfair-display-LICENSE.txt`. O título mostra permanentemente a dica discreta de que é editável e gera uma nova constelação. O fundo decorativo usa cinco camadas de estrelas, com opacidade de 34%.
+O título e os rótulos dos glifos usam **Playfair Display ExtraBold (800), sem itálico** na tela e na impressão. O título usa espaçamento normal entre caracteres. A fonte é distribuída com a aplicação via Fontsource, sem requisições ao Google Fonts. A licença SIL OFL acompanha o site em `fonts/playfair-display-LICENSE.txt`. O título mostra permanentemente a dica discreta de que é editável e gera uma nova constelação. O fundo decorativo usa cinco camadas de estrelas, com opacidade de 34%.
 
 Use **Ctrl+P** (ou **Cmd+P**) para imprimir ou salvar em PDF. O estilo de impressão prepara uma página A4 em fundo branco, com marca Astronymic, título e constelação em tons escuros. Letras/números aparecem somente quando o toggle correspondente estiver habilitado. Menu, dicas, avisos, debug e estrelas decorativas do fundo são ocultados, mesmo com o menu aberto. A impressão não depende da opção de gráficos de fundo do navegador. O desenho pendente de debounce é atualizado antes da impressão para corresponder ao título mais recente.
 
