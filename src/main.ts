@@ -1,3 +1,4 @@
+import '@fontsource/playfair-display/400.css';
 import './style.css';
 import { ALPHABET, injectGlyph, injectConstellation, type Injection } from './glyphs.ts';
 import { appendGlyphs, sparkle, VERTEX_HALO_RADIUS, ORIGIN_RING_RADIUS, ORIGIN_STAR_RADIUS, ATLAS_EDGE_MASK_ID } from './glyph-renderer.ts';
