@@ -1,6 +1,6 @@
 import './style.css';
 import { ALPHABET, injectGlyph, injectConstellation, type Injection } from './glyphs.ts';
-import { appendGlyphs, sparkle, VERTEX_HALO_RADIUS, ORIGIN_RING_RADIUS, ATLAS_EDGE_MASK_ID } from './glyph-renderer.ts';
+import { appendGlyphs, sparkle, VERTEX_HALO_RADIUS, ORIGIN_RING_RADIUS, ORIGIN_STAR_RADIUS, ATLAS_EDGE_MASK_ID } from './glyph-renderer.ts';
 import { generate, normalizeText, MAX_LETTERS, type Constellation, type Branching } from './generator.ts';
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
@@ -31,7 +31,7 @@ app.innerHTML = `
     </header>
     <div class="title-area">
       <h1 id="title" contenteditable="plaintext-only" role="textbox" aria-label="Título da constelação" aria-multiline="false" aria-describedby="text-help input-feedback" spellcheck="false" data-placeholder="Escreva seu universo">Astronymic</h1>
-      <p id="text-help" class="title-help">Edite o título para criar sua constelação. Até 120 letras; acentos são normalizados e espaços, números e pontuação são ignorados.</p>
+      <p id="text-help" class="title-help">Este título é editável. Altere o texto para gerar uma nova constelação.</p>
     </div>
     <div id="drawing"></div>
     <p id="input-feedback" class="feedback" role="status" aria-live="polite" hidden></p>
@@ -93,7 +93,7 @@ function render(result: Constellation, injection: Injection) {
     svg.append(overlay);
   }
   appendGlyphs(svg, injection.glyphs);
-  svg.append(element('circle', { cx: 0, cy: 0, r: ORIGIN_RING_RADIUS, class: 'origin-ring' }), sparkle({ x: 0, y: 0 }, 2.6));
+  svg.append(element('circle', { cx: 0, cy: 0, r: ORIGIN_RING_RADIUS, class: 'origin-ring' }), sparkle({ x: 0, y: 0 }, ORIGIN_STAR_RADIUS, 'star origin-star'));
   for (const s of result.segments) {
     svg.append(element('circle', { cx: s.end.x, cy: s.end.y, r: VERTEX_HALO_RADIUS, class: 'halo' }), sparkle(s.end, 2.7));
     if (labels.checked) {
@@ -143,6 +143,7 @@ function update() {
   render(result, injection);
 }
 let timer: ReturnType<typeof setTimeout>;
+window.addEventListener('beforeprint', () => { clearTimeout(timer); update(); });
 function schedule() { clearTimeout(timer); timer = setTimeout(update, 500); }
 let composing = false;
 title.addEventListener('compositionstart', () => { composing = true; clearTimeout(timer); });

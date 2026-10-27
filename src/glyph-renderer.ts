@@ -1,12 +1,14 @@
-import type { Glyph, GlyphEdge } from './glyphs.ts';
+import type { Glyph, GlyphEdge, Vertex } from './glyphs.ts';
 import { distance, pointOnEdge } from './geometry.ts';
 import type { Point } from './generator.ts';
 
 export const ATLAS_EDGE_MASK_ID = 'atlas-star-gaps';
 export const VERTEX_HALO_RADIUS = 7;
 export const INTERNAL_HALO_RADIUS = 5;
-export const ORIGIN_RING_RADIUS = 9;
+export const ORIGIN_RING_RADIUS = 18;
+export const ORIGIN_STAR_RADIUS = 5.2;
 const LINE_HALO_GAP = 2;
+const STAR_SCALE = 2;
 
 const NS = 'http://www.w3.org/2000/svg';
 function svg<K extends keyof SVGElementTagNameMap>(name: K, attrs: Record<string, string | number> = {}) {
@@ -16,49 +18,61 @@ function svg<K extends keyof SVGElementTagNameMap>(name: K, attrs: Record<string
 }
 const xy = (p: { x: number; y: number }) => `${p.x} ${p.y}`;
 
-/** Four tips with inward-curving sides, inside the original circular footprint. */
+/** Four inward-curving sides; enlarge the core while keeping it inside its halo. */
 export function sparkle(point: Point, radius: number, className = 'star', attrs: Record<string, string | number> = {}): SVGPathElement {
   const { x, y } = point;
+  radius *= STAR_SCALE;
   const inset = radius * 0.18;
   const d = `M ${x} ${y - radius} Q ${x + inset} ${y - inset} ${x + radius} ${y} Q ${x + inset} ${y + inset} ${x} ${y + radius} Q ${x - inset} ${y + inset} ${x - radius} ${y} Q ${x - inset} ${y - inset} ${x} ${y - radius} Z`;
   return svg('path', { d, class: className, ...attrs });
+}
+
+function vertexKeepout(vertex: Vertex, reference: boolean): number {
+  const halo = reference || !vertex.boundary ? INTERNAL_HALO_RADIUS : vertex.id === 'origin' ? ORIGIN_RING_RADIUS + 0.5 : VERTEX_HALO_RADIUS;
+  return halo + LINE_HALO_GAP;
 }
 
 /** Clip strokes outside endpoint halos; graph coordinates and double traces stay intact. */
 function starGapMask(parent: SVGElement, glyphs: Glyph[], reference: boolean): string {
   const id = reference ? `reference-star-gaps-${glyphs[0].segmentId}` : ATLAS_EDGE_MASK_ID;
   const vertices = [...new Map(glyphs.flatMap(g => g.vertices).map(v => [v.id, v])).values()];
-  const minX = Math.min(...vertices.map(v => v.point.x)) - 20;
-  const minY = Math.min(...vertices.map(v => v.point.y)) - 20;
-  const width = Math.max(...vertices.map(v => v.point.x)) - minX + 20;
-  const height = Math.max(...vertices.map(v => v.point.y)) - minY + 20;
+  const margin = ORIGIN_RING_RADIUS + LINE_HALO_GAP + 2;
+  const minX = Math.min(...vertices.map(v => v.point.x)) - margin;
+  const minY = Math.min(...vertices.map(v => v.point.y)) - margin;
+  const width = Math.max(...vertices.map(v => v.point.x)) - minX + margin;
+  const height = Math.max(...vertices.map(v => v.point.y)) - minY + margin;
   const defs = svg('defs');
   const mask = svg('mask', { id, maskUnits: 'userSpaceOnUse', maskContentUnits: 'userSpaceOnUse', x: minX, y: minY, width, height, style: 'mask-type: luminance' });
   mask.append(svg('rect', { x: minX, y: minY, width, height, fill: 'white' }));
   for (const vertex of vertices) {
-    const halo = reference || !vertex.boundary ? INTERNAL_HALO_RADIUS : vertex.id === 'origin' ? ORIGIN_RING_RADIUS + 0.5 : VERTEX_HALO_RADIUS;
-    mask.append(svg('circle', { cx: vertex.point.x, cy: vertex.point.y, r: halo + LINE_HALO_GAP, fill: 'black', 'data-vertex-id': vertex.id }));
+    mask.append(svg('circle', { cx: vertex.point.x, cy: vertex.point.y, r: vertexKeepout(vertex, reference), fill: 'black', 'data-vertex-id': vertex.id }));
   }
   defs.append(mask); parent.append(defs);
   return id;
 }
 
-function appendEdge(group: SVGGElement, edge: GlyphEdge) {
+function appendEdge(group: SVGGElement, edge: GlyphEdge, reference: boolean) {
   const start = edge.from.point, end = edge.to.point;
   const length = distance(start, end);
   const ux = (end.x - start.x) / length, uy = (end.y - start.y) / length;
   const line = (d: string, className = '') => group.append(svg('path', { d, class: `segment glyph-stroke ${className}` }));
+  // End actual strokes before the mask boundary, leaving room for their round caps.
+  const fromClearance = vertexKeepout(edge.from, reference) + 0.5;
+  const toClearance = vertexKeepout(edge.to, reference) + 0.5;
+  if (length <= fromClearance + toClearance) return;
   if (edge.style === 'double') {
     for (const side of [-1, 1]) {
-      const inset = Math.min(0.12, 4 / length);
+      const perpendicular = side * 2.1;
+      const fromInset = Math.sqrt(fromClearance ** 2 - perpendicular ** 2) / length;
+      const toInset = Math.sqrt(toClearance ** 2 - perpendicular ** 2) / length;
       const offset = (t: number) => {
         const p = pointOnEdge(start, end, t);
-        return { x: p.x - uy * side * 2.1, y: p.y + ux * side * 2.1 };
+        return { x: p.x - uy * perpendicular, y: p.y + ux * perpendicular };
       };
-      line(`M ${xy(start)} L ${xy(offset(inset))} L ${xy(offset(1 - inset))} L ${xy(end)}`, 'double-trace');
+      line(`M ${xy(offset(fromInset))} L ${xy(offset(1 - toInset))}`, 'double-trace');
     }
   } else {
-    line(`M ${xy(start)} L ${xy(end)}`);
+    line(`M ${xy(pointOnEdge(start, end, fromClearance / length))} L ${xy(pointOnEdge(start, end, 1 - toClearance / length))}`);
     if (edge.style === 'cuts') {
       for (const shift of [-3.4, 3.4]) {
         const center = pointOnEdge(start, end, 0.5 + shift / length);
@@ -80,7 +94,7 @@ export function appendGlyphs(parent: SVGElement, glyphs: Glyph[], includeBoundar
     const title = svg('title'); title.textContent = `${glyph.letter} · ${glyph.notation}`; group.append(title);
     for (const edge of glyph.edges) {
       const edgeGroup = svg('g', { class: 'glyph-edge', 'data-edge-id': edge.id, 'data-style': edge.style, mask: `url(#${maskId})` });
-      appendEdge(edgeGroup, edge); group.append(edgeGroup);
+      appendEdge(edgeGroup, edge, includeBoundaries); group.append(edgeGroup);
     }
     for (const mark of glyph.marks) group.append(svg('circle', {
       cx: mark.point.x, cy: mark.point.y, r: mark.radius * 2.6, class: 'halo glyph-mark-halo',
