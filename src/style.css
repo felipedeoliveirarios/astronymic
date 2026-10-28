@@ -121,7 +121,7 @@ h1:empty::before {
 .title-help {
   font-size: 10px;
   line-height: 1.7;
-  color: rgb(255 255 255 / 60%);
+  color: rgb(255 255 255 / 40%);
   margin: 8px auto 0;
   max-width: 580px;
 }
