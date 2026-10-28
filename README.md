@@ -2,15 +2,29 @@
 
 **Astronymic** é um sistema de escrita baseado em grafos e uma aplicação web para transformar palavras em composições visuais semelhantes a constelações. O objetivo principal da aplicação é **gerar** desenhos válidos a partir de texto, não reconhecer ou decodificar desenhos arbitrários.
 
-> Estado: protótipo funcional de macrogeometria e injeção dos 26 glifos. Parâmetros numéricos são pontos de partida para testes, não calibrações definitivas.
+> Estado: protótipo funcional publicado, com os 26 glifos, interface em quatro idiomas, exportação PNG e impressão. Parâmetros geométricos seguem sujeitos a calibração; layouts com conflitos remanescentes exibem aviso.
+
+[Abrir o Astronymic](https://felipedeoliveirarios.github.io/astronymic/)
+
+O código de escrita Astronymic foi criado por **[@the_alchemy_book no Instagram](https://www.instagram.com/the_alchemy_book/)**. Esta aplicação implementa a geração procedural e as adaptações descritas abaixo. O crédito também aparece no menu de informações.
+
+## Uso rápido
+
+1. Edite o título diretamente no atlas para gerar uma constelação. A atualização ocorre após 500 ms sem digitação.
+2. No ícone de **Ajustes**, escolha o idioma, informe uma semente ou explore outro céu. Os toggles controlam letras/números e debug.
+3. No ícone de **download**, abra **Exportar constelação**, escolha o formato e clique em **Baixar imagem PNG**.
+4. No ícone de **Informações**, consulte a leitura, o alfabeto visual, a semente efetiva e as versões do gerador.
+5. Use **Ctrl+P / Cmd+P** para imprimir ou salvar em PDF.
+
+Os menus começam recolhidos, são exclusivos e fecham com Escape ou clique fora. O texto digitado é preservado no título; a geração usa somente as letras normalizadas A–Z, até 120 letras. A preferência de idioma é salva neste navegador; título, semente e opções de exibição não são persistidos entre recarregamentos.
 
 ## 1. Alfabeto
 
 Cada glifo é um grafo com vértice de **entrada** e vértice de **saída**. Convenções da notação compacta:
 
 - `o`: vértice;
-- `^`: marca circular pequena acima da aresta;
-- `_`: marca circular pequena abaixo da aresta;
+- `^`: marca pequena acima da aresta;
+- `_`: marca pequena abaixo da aresta;
 - `:`: marcas acima e abaixo na mesma posição longitudinal;
 - `=`: aresta desenhada com traço duplo, não duas arestas independentes;
 - `|`: aresta com dois cortes diagonais (`//`) na região central;
@@ -77,7 +91,7 @@ Separar claramente **topologia**, **macrogeometria** (posição de entradas/saí
 
 Iniciar com a regra acima **sem jitter extra** na probabilidade herdada. Avaliar regularidade excessiva apenas depois dos primeiros resultados.
 
-**Detalhe de implementação a formalizar:** distinguir a aresta de continuidade obrigatória das ramificações adicionais, sobretudo quando restam poucos slots, para evitar nós ou ramos sem glifos.
+**Implementado:** uma continuação obrigatória reserva o primeiro slot; os testes decidem os ramos adicionais, limitados pelo orçamento de letras. O orçamento restante é distribuído entre ramos não vazios.
 
 ### 3.2. Layout angular e reserva espacial
 
@@ -129,7 +143,7 @@ Parâmetros iniciais sugeridos para testes:
 | Marcação, posição na aresta | ±8% do comprimento da aresta |
 | Marcação, afastamento | ±20% do afastamento padrão |
 
-Impedir inversão de ordem, sobreposição com vértices, troca de lado global ou inversão dos caminhos que diferenciam glifos como B e C. Em arestas verticais ou quase verticais, será preciso escolher uma convenção geométrica consistente para marcações globais acima/abaixo.
+Impedir inversão de ordem, sobreposição com vértices, troca de lado global ou inversão dos caminhos que diferenciam glifos como B e C. Em arestas exatamente verticais, marcas superiores ficam acima e à direita da âncora; inferiores, abaixo e à esquerda. As demais usam a normal orientada para cima na página.
 
 ## 4. Aleatoriedade reproduzível
 
@@ -138,23 +152,24 @@ Impedir inversão de ordem, sobreposição com vértices, troca de lado global o
 - Usar hash e PRNG determinísticos explicitamente definidos; não depender diretamente de `Math.random()`.
 - Fixar uma **versão do algoritmo**, pois alterações de geração podem mudar o resultado mesmo com a mesma seed.
 - Todas as etapas (topologia, ângulos, distâncias e microdeformações) usam a fonte determinística de aleatoriedade.
-- Definir posteriormente normalização Unicode, tratamento de acentos, espaços, números e pontuação; o alfabeto formalizado contém A–Z.
+- Normalizar com NFD, remover marcas Unicode, converter para maiúsculas e reter A–Z. Espaços, números e pontuação não criam glifos.
 
 ## 5. Aplicação web e experiência visual
 
-- Aplicação **inteiramente frontend**, em formato SPA; Angular/TypeScript e SVG são opções adequadas de implementação.
-- Visual de **pôster de constelação**: fundo escuro estrelado, traços delicados e estrelas nos vértices.
-- **Título editável diretamente no atlas**: o texto do título é a entrada da geração; a constelação aparece abaixo, sem um campo de texto separado. O atlas ocupa a página inteira, com Astronymic no canto superior esquerdo.
-- Atualizar após pequeno **debounce** (referência: ~500 ms), com transição/revelação suave, sem espera artificial desnecessária.
-- **Menu lateral recolhível de referência:** dicionário completo dos 26 glifos, convenções, regras de escrita/leitura e nota sobre a adaptação de J.
-- **Menu lateral recolhível de geração:** seed padrão derivada do texto, seed personalizada e opção de gerar nova seed; parâmetros visuais poderão ser expostos progressivamente.
-- **Sem edição manual ou arraste de vértices**: o layout é decidido automaticamente.
-- Exportação **SVG/PNG** é desejada para uma etapa posterior.
-- Preservar o aspecto de constelação sem adicionar ramos decorativos que não correspondam a letras.
+- Frontend em **TypeScript, Vite e SVG**, sem framework ou backend.
+- Atlas em tela inteira, com Astronymic no canto superior esquerdo e título editável diretamente.
+- Três menus compactos: **Ajustes**, **Exportar constelação** e **Informações**.
+- Interface em português, inglês, espanhol e francês, com seleção inicial pelo navegador e preferência manual persistida.
+- Estrelas em forma de brilho de quatro pontas, marcas menores da mesma forma, halos e traços arredondados que deixam espaço antes das estrelas.
+- Título Playfair Display ExtraBold, sem itálico; labels JetBrains Mono em branco a 25% de opacidade; ajuda abaixo do título em branco a 40%.
+- Download PNG em três proporções e impressão/PDF A4 com composição própria. Exportação de arquivo SVG ainda não implementada.
+- Layout automático, sem arraste ou edição manual de vértices.
 
 ## 6. Validação e pontos ainda abertos
 
-**Invariantes fundamentais**
+**Invariantes fundamentais do gerador normal**
+
+O easter egg documentado ao final é uma exceção explícita à correspondência entre texto e glifos.
 - Cada letra do texto normalizado aparece uma única vez na árvore, na ordem DFS.
 - Toda ramificação possui ao menos um glifo.
 - Glifos preservam seus vértices de entrada/saída, conectividade, ordem de caminhos e marcações.
@@ -168,16 +183,20 @@ Impedir inversão de ordem, sobreposição com vértices, troca de lado global o
 - Construção regular de cada glifo composto e margem de segurança para sua injeção.
 - Comportamento de sequências longas, bifurcações profundas e setores muito estreitos.
 - Legibilidade de marcas em arestas quase verticais.
-- Normalização de texto fora de A–Z.
+- Ampliação do alfabeto além da normalização atual para A–Z.
 - Ajuste dos percentuais e dos comprimentos após testes visuais.
 
-## 7. Próxima etapa sugerida
+## 7. Evolução possível
 
-Implementar um protótipo que gere primeiro a **árvore de segmentos de entrada/saída**, sem glifos internos; depois acrescentar a injeção e a validação. Testar com palavras curtas e longas e seeds fixas antes de trabalhar no acabamento visual do pôster.
+- Melhorar a resolução global de colisões após a injeção, inclusive para textos longos e setores estreitos.
+- Formalizar a reserva espacial das subárvores e validar a decodificação única.
+- Avaliar exportação SVG independente e persistência/compartilhamento de título e semente.
+
+Estas são possibilidades de evolução, não funcionalidades já disponíveis.
 
 ## 8. Protótipo executável
 
-A árvore e a injeção dos glifos estão implementadas com **TypeScript, Vite e SVG**, sem backend. Angular permanece uma opção para evolução; este protótipo isola o gerador da interface.
+A árvore e a injeção dos glifos estão implementadas com **TypeScript, Vite e SVG**, sem backend. O gerador é isolado da interface.
 
 ### Desenvolvimento
 
@@ -191,6 +210,7 @@ npm run dev
 Verificações e build de publicação:
 
 ```sh
+npm run format:check
 npm test
 npm run build -- --base=./
 npm run preview
@@ -201,7 +221,7 @@ O build é gerado em `dist/`. Não há chaves, banco de dados ou variáveis de a
 ### O que esta versão faz
 
 - Gera a **árvore de segmentos entrada–saída**, com uma letra por segmento e ordem DFS angular horária, e injeta os 26 glifos do alfabeto sem mover as fronteiras. A macrogeometria continua disponível no debug.
-- O atlas ocupa a página inteira, com título editável diretamente no pôster e debounce de 500 ms. O menu compacto de **Ajustes**, inicialmente recolhido e indicado apenas pelo ícone de controles no canto superior direito, reúne seed automática/personalizada, nova seed aleatória e toggles de ordem/letras e debug. O botão separado de **Informações** (ícone de informação) abre regras de leitura, alfabeto e metadados. Só um dos menus permanece aberto por vez. Fecha com Escape ou clique fora; Enter encerra a edição do título, e colagem usa somente texto simples. Mensagens visíveis ficam reservadas para erros e cruzamentos; contagem de letras, seed efetiva e versão ficam dentro do menu.
+- O atlas ocupa a página inteira, com título editável diretamente no pôster e debounce de 500 ms. O menu compacto de **Ajustes**, inicialmente recolhido e indicado apenas pelo ícone de controles no canto superior direito, reúne idioma, seed automática/personalizada, nova seed aleatória e toggles de ordem/letras e debug. O botão separado de **Informações** (ícone de informação) abre regras de leitura, alfabeto e metadados. O terceiro menu, **Exportar constelação** (ícone de download), reúne formato e botão de download PNG. Só um dos menus permanece aberto por vez. Fecha com Escape ou clique fora; Enter encerra a edição do título, e colagem usa somente texto simples. Mensagens visíveis ficam reservadas para erros e cruzamentos; contagem de letras, seed efetiva e versão ficam dentro do menu.
 - O toggle **Debug: setores e branching** sobrepõe leques dos setores locais de cada segmento e os percentuais realmente testados em cada junção (incluindo a origem). `✓` indica ramo criado e `×` a primeira falha; folhas e esgotamento do orçamento aparecem como `fim` e `sem teste`. Tooltips detalham a abertura, o offset e a probabilidade herdada. Os leques têm raio ilustrativo e não representam uma reserva espacial garantida de toda a subárvore. A instrumentação não consome novos sorteios nem altera a geometria/versão do algoritmo.
 - Usa FNV-1a (unidades UTF-16) e Mulberry32, com versão de geração `segments-v3` (compensação angular com ruído de até ±20% da abertura do setor). O namespace de aleatoriedade `segments-v1` foi mantido para isolar a mudança de geometria, preservando os sorteios de topologia e comprimentos por tentativa. A seed aleatória vem de Web Crypto e é mostrada para reprodução; a geração usa exclusivamente o PRNG determinístico.
 - Normalização inicial: NFD, remoção de marcas Unicode, conversão para maiúsculas e retenção de A–Z. Espaços, números e pontuação são descartados. Limite: 120 letras após normalização; textos maiores recebem erro sem truncamento silencioso.
@@ -216,15 +236,15 @@ O build é gerado em `dist/`. Não há chaves, banco de dados ou variáveis de a
 - Os extremos permanecem fixos. A microgeometria usa um stream Mulberry32 separado, derivado de `glyphs-v1`, seed, ID da instância, letra e tentativa. Alterar a injeção não consome sorteios da árvore. A versão exibida combina `segments-v3` e `glyphs-v3`; o namespace aleatório `glyphs-v1` permanece fixo para preservar os sorteios de deformação.
 - Vértices internos recebem offsets de até ±10% longitudinal e ±15% transversal. Marcas recebem jitter longitudinal de até ±8% da aresta (reduzido quando necessário para manter a ordem) e afastamento de até ±20%. Pares `:` usam a mesma posição longitudinal. O lado é sempre global: a marca superior tem Y menor que sua âncora, independentemente da direção de leitura. O afastamento segue a normal orientada para cima na página. Somente em arestas exatamente verticais (`abs(dx / comprimento) < 1e-7`) há um pequeno deslocamento longitudinal: superior acima/direita e inferior abaixo/esquerda.
 - As marcações são distribuídas no comprimento **visível** da linha, após os recuos dos halos. O símbolo e seu halo permanecem dentro dessa faixa longitudinal; jitter e deslocamento lateral respeitam esse limite. Em linhas curtas, o tamanho das marcas é reduzido para caber, sem eliminar marcas ou trocar a ordem. A validação também sinaliza quando não há comprimento disponível.
-- Rótulos de número/letra usam um tom discreto, ligeiramente mais escuro que a dica do título na tela. A base é o centro da caixa dos vértices de cada glifo, incluindo os internos. Um posicionador determinístico procura locais próximos acima/laterais, verificando a caixa do texto contra linhas, estrelas, marcas e rótulos já colocados. Se nenhum candidato estiver livre, usa o de menor sobreposição. As caixas entram no enquadramento para evitar cortes; a impressão mantém o contraste próprio para papel.
+- Rótulos de número/letra usam branco com 25% de opacidade, combinando-se com o fundo azul ou vermelho. A base é o centro da caixa dos vértices de cada glifo, incluindo os internos. Um posicionador determinístico procura locais próximos acima/laterais, verificando a caixa do texto contra linhas, estrelas, marcas e rótulos já colocados. Se nenhum candidato estiver livre, usa o de menor sobreposição. As caixas entram no enquadramento para evitar cortes; a impressão mantém o contraste próprio para papel.
 - A validação verifica cruzamentos, sobreposição de arestas e aproximações entre vértices, marcas e arestas. Os raios dos núcleos das estrelas e das marcas vêm das mesmas métricas usadas na renderização (`src/appearance.ts`), incluindo o fator de escala visual; os círculos usados como limites são conservadores em relação ao sparkle. Essa correção pode selecionar outra tentativa de microgeometria para a mesma seed e por isso usa a versão `glyphs-v3`. Pontos de fronteira compartilhados são permitidos; os demais vértices têm IDs próprios. Sete tentativas determinísticas reduzem a deformação até incluir a forma regular. Se persistirem conflitos, o resultado com menos diagnósticos é exibido **com aviso**. O ajuste atual não refaz a macrogeometria para acomodar um glifo largo.
 - Os testes cobrem os 26 grafos e suas marcas, ordem de caminhos após rotação, deformações, limites fixos, reprodução e detecção de conflitos. As formas regulares foram verificadas em 24 orientações e comprimentos 30/100 (1.248 casos). A validação ainda não prova decodificação única, não garante reserva espacial de subárvores e não verifica colisões entre halos decorativos. O posicionamento de rótulos é uma etapa separada e heurística. As margens para traços duplos/cortes são conservadoras.
 
-Exportação SVG/PNG e resolução global de colisões após a injeção **ainda não estão implementadas**.
+Exportação PNG está implementada. Exportação de arquivo SVG e resolução global de colisões após a injeção **ainda não estão implementadas**.
 
 ### Aparência e impressão
 
-O título usa **Playfair Display ExtraBold (800), sem itálico**; os rótulos dos glifos usam **JetBrains Mono Regular (400)**, com contraste um pouco mais baixo na tela. Ambas são usadas também na impressão. O título usa espaçamento normal entre caracteres. As fontes são distribuídas com a aplicação via Fontsource, sem requisições ao Google Fonts. JetBrains Mono carrega somente o subconjunto latino, suficiente para os rótulos A–Z e números; Playfair Display preserva os subconjuntos usados pelo título livre. As licenças SIL OFL acompanham o site em `fonts/playfair-display-LICENSE.txt` e `fonts/jetbrains-mono-LICENSE.txt`. O título mostra permanentemente a dica discreta de que é editável e gera uma nova constelação. O fundo decorativo usa cinco camadas de estrelas, com opacidade de 34%.
+O título usa **Playfair Display ExtraBold (800), sem itálico**; os rótulos dos glifos usam **JetBrains Mono Regular (400)**, em branco com 25% de opacidade na tela e no PNG. Ambas são usadas também na impressão. O título usa espaçamento normal entre caracteres. As fontes são distribuídas com a aplicação via Fontsource, sem requisições ao Google Fonts. JetBrains Mono carrega somente o subconjunto latino, suficiente para os rótulos A–Z e números; Playfair Display preserva os subconjuntos usados pelo título livre. As licenças SIL OFL acompanham o site em `fonts/playfair-display-LICENSE.txt` e `fonts/jetbrains-mono-LICENSE.txt`. A dica abaixo do título usa branco com 40% de opacidade e explica que editar o texto gera uma nova constelação. O fundo decorativo usa cinco camadas de estrelas, com opacidade de 34%.
 
 Use **Ctrl+P** (ou **Cmd+P**) para imprimir ou salvar em PDF. O estilo de impressão prepara uma página A4 em fundo branco, com marca Astronymic, título e constelação em tons escuros. Letras/números aparecem somente quando o toggle correspondente estiver habilitado. Menu, dicas, avisos, debug e estrelas decorativas do fundo são ocultados, mesmo com o menu aberto. A impressão não depende da opção de gráficos de fundo do navegador. O desenho pendente de debounce é atualizado antes da impressão para corresponder ao título mais recente.
 
@@ -241,6 +261,8 @@ O seletor **Idioma / Language / Idioma / Langue**, em Ajustes, permite escolher 
 ### Organização e desempenho
 
 - `src/main.ts` coordena os eventos e o estado da interface. `src/ui.ts` monta a estrutura da página; `src/atlas-renderer.ts` produz o SVG do atlas; `src/svg.ts` reúne a criação dos elementos SVG.
+- `src/export.ts` cria o PNG em canvas a partir de uma cópia SVG com estilos e fonte dos rótulos incorporados, sem alterar o atlas visível.
+- `src/locales/` e `src/i18n.ts` concentram catálogos e resolução de idioma.
 - `src/scene.ts` mantém um cache limitado à cena atual (texto normalizado e seed efetiva) e ao posicionamento atual dos rótulos. Alternar labels/debug ou imprimir sem alterar a entrada reutiliza a árvore e os glifos. O carregamento da fonte invalida somente as medidas dos rótulos.
 - `src/alphabet.ts` monta a referência A–Z apenas na primeira abertura do submenu, preservando seus elementos nas aberturas seguintes.
 - `src/appearance.ts` centraliza tamanhos e folgas usados pelo desenho, pelo posicionamento dos rótulos e pelo validador. Os testes incluem uma regressão para colisões que passavam com os raios anteriores à ampliação das estrelas.
@@ -263,3 +285,17 @@ O build usa base relativa (`./`) para carregar os assets tanto em `/astronymic/`
 ### Exportação de imagem
 
 O menu de exportação (ícone de download) permite escolher o formato e baixar um PNG nos formatos pôster 4:5 (2400 × 3000), horizontal 16:9 (3200 × 1800) ou vertical 9:16 (1800 × 3200 pixels) com fundo escuro, título e constelação. A exportação respeita o toggle de letras e números, omite debug e controles e acontece inteiramente no navegador.
+
+| Formato | Resolução PNG |
+|---|---|
+| Pôster · 4:5 | 2400 × 3000 |
+| Horizontal · 16:9 | 3200 × 1800 |
+| Vertical · 9:16 | 1800 × 3200 |
+
+O desenho é enquadrado sem distorção ou corte. O título usa a fonte do atlas e quebra em linhas quando necessário. A imagem inclui a marca Astronymic e um fundo estrelado próprio; não é uma captura da tela. Ajuda, avisos e menus são omitidos. A exportação aguarda as fontes, atualiza a entrada pendente e mantém o botão desabilitado enquanto gera o arquivo. Texto acima do limite impede o download e mantém o aviso de validação. Falhas na exportação são informadas no próprio menu. Nenhum texto ou arquivo é enviado a um serviço de exportação.
+
+### Easter egg
+
+Quando o título normalizado é exatamente **FAZOL**, a cena usa duas hastes simples equivalentes a glifos A, formando um **L**: origem na quina, haste vertical de 160 unidades para cima e horizontal de 100 para a direita. O fundo fica vermelho, também nos PNGs de qualquer formato. A semente não altera essa geometria. Letras/números continuam sujeitos ao toggle e identificam as duas hastes como A.
+
+A ativação segue a mesma normalização do gerador: diferenças de caixa, acentos, espaços e pontuação são descartadas. Trata-se de uma exceção deliberada à correspondência de uma letra de entrada por glifo; o gerador normal permanece inalterado. Ao trocar o título por outro texto, o desenho procedural e o fundo azul voltam automaticamente. Na impressão, o fundo continua branco para papel.
