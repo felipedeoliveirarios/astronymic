@@ -47,6 +47,7 @@ export function renderAtlas(
   const svg = element('svg', {
     viewBox: `${minX} ${minY} ${width} ${height}`,
     role: 'img',
+    'data-easter-egg': String(result.normalized === 'FAZOL'),
     'aria-labelledby': 'svg-title svg-desc',
   });
   const svgTitle = element('title', { id: 'svg-title' });

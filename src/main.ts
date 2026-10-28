@@ -36,6 +36,9 @@ let currentScene: Scene | undefined;
 
 function displayScene(scene: Scene) {
   const { constellation: result, injection } = scene;
+  document
+    .querySelector('.poster')!
+    .classList.toggle('easter-egg', result.normalized === 'FAZOL');
   context.font = `400 8px ${getComputedStyle(drawing).getPropertyValue('--label-font-family')}`;
   const placements = labels.checked
     ? cache.getLabels(scene, `${context.font}:${fontRevision}`, (text) => {

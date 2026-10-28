@@ -64,3 +64,29 @@ test('a failed generation cannot make the previous scene cache return stale data
   assert.throws(() => cache.getScene('A'.repeat(121)), RangeError);
   assert.strictEqual(cache.getScene('SOL'), scene);
 });
+
+test('FAZOL reveals two plain A arms with a shared origin at the L corner', () => {
+  const cache = createSceneCache();
+  const scene = cache.getScene('fazol', 'secret');
+  assert.equal(scene.constellation.normalized, 'FAZOL');
+  assert.deepEqual(
+    scene.constellation.segments.map((s) => [
+      s.letter,
+      s.parentId,
+      s.start,
+      s.end,
+    ]),
+    [
+      ['A', null, { x: 0, y: 0 }, { x: 0, y: -160 }],
+      ['A', null, { x: 0, y: 0 }, { x: 100, y: 0 }],
+    ],
+  );
+  assert.equal(scene.injection.issues.length, 0);
+  assert.equal(scene.injection.glyphs.length, 2);
+  assert.ok(scene.injection.glyphs.every((g) => g.marks.length === 0));
+  assert.deepEqual(
+    cache.getScene('FAZOL', 'another').constellation.segments,
+    scene.constellation.segments,
+  );
+  assert.equal(cache.getScene('Astronymic').constellation.segments.length, 10);
+});

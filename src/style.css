@@ -605,3 +605,10 @@ button {
 .credits a:focus-visible {
   color: #c6ac7f;
 }
+
+@media screen {
+  .poster.easter-egg {
+    background:
+      radial-gradient(ellipse at 50% 45%, #b82c3885, transparent 67%), #850f20;
+  }
+}

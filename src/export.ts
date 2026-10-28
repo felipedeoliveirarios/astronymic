@@ -74,7 +74,8 @@ export async function exportPng(
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext('2d')!;
-  ctx.fillStyle = '#0b1221';
+  const easterEgg = source.dataset.easterEgg === 'true';
+  ctx.fillStyle = easterEgg ? '#850f20' : '#0b1221';
   ctx.fillRect(0, 0, width, height);
   const glow = ctx.createRadialGradient(
     width / 2,
@@ -84,8 +85,8 @@ export async function exportPng(
     height * 0.47,
     Math.max(width, height) / 2,
   );
-  glow.addColorStop(0, '#17253885');
-  glow.addColorStop(1, '#17253800');
+  glow.addColorStop(0, easterEgg ? '#b82c3885' : '#17253885');
+  glow.addColorStop(1, easterEgg ? '#b82c3800' : '#17253800');
   ctx.fillStyle = glow;
   ctx.fillRect(0, 0, width, height);
   // Fixed decorative sky: exporting never consumes the constellation's random stream.
